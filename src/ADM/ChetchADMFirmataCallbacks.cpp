@@ -20,7 +20,7 @@
 
 const char BOARD_PARAM[] PROGMEM = "BD";
 const char MAX_DEVICES_PARAM[] PROGMEM = "MD";
-const char MAX_ARGUMENTS_PARAM[] PROGMEM = "LE";
+const char BOARD_ID_PARAM[] PROGMEM = "BDID";
 const char LITTLE_ENDIAN_PARAM[] PROGMEM = "LE";
 const char LEDBI_PARAM[] PROGMEM = "LEDBI";
 const char CALLBACK_COUNT_PARAM[] PROGMEM = "CC";
@@ -43,10 +43,10 @@ const char DEVICE_ALREADY_ADDED_MESSAGE[] PROGMEM = "Device already added";
 const char *const PARAMS_TABLE[] PROGMEM = {
 					BOARD_PARAM, 
 					MAX_DEVICES_PARAM, 
-					MAX_ARGUMENTS_PARAM, 	//not used
+					BOARD_ID_PARAM, 	
 					LITTLE_ENDIAN_PARAM, 
 					LEDBI_PARAM,
-					CALLBACK_COUNT_PARAM,  	//deprecated
+					CALLBACK_COUNT_PARAM,  	//not used
 					FREE_MEMORY_PARAM, 
 					DEVICE_COUNT_PARAM, 
 					DEVICE_TARGET_PARAM, 
@@ -124,7 +124,10 @@ namespace Chetch{
 					response->type = ADMMessage::TYPE_STATUS_RESPONSE;
 					
 					//General values for the board
-					response->addValue(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), BOARD, true);
+					response->addValue(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), BOARD, false);
+					if(this->boardID != NULL){
+						response->addValue(Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), this->boardID, true);
+					}
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), MAX_DEVICES);
 					response->addBool(Utils::getStringFromProgmem(stBuffer, 3, PARAMS_TABLE), LITTLE_ENDIAN);
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 4, PARAMS_TABLE), LED_BUILTIN);

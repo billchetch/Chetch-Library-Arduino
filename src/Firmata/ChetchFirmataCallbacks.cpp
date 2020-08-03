@@ -3,11 +3,12 @@
 namespace Chetch{
 
 FirmataCallbacks *FirmataCallbacks::FCB = NULL;
-void FirmataCallbacks::init(FirmataCallbacks* fcb, int options = 0) {
+void FirmataCallbacks::init(FirmataCallbacks* fcb, int options = 0, char* boardID = NULL) {
 
 	if (FirmataCallbacks::FCB == NULL) {
+		fcb->boardID = boardID;
 		FirmataCallbacks::FCB = fcb;
-
+		
 		Firmata.setFirmwareVersion(FIRMATA_FIRMWARE_MAJOR_VERSION, FIRMATA_FIRMWARE_MINOR_VERSION);
 		Firmata.attach(STRING_DATA, FirmataCallbacks::stringCallback);
 		Firmata.attach(START_SYSEX, FirmataCallbacks::sysexCallback);

@@ -6,7 +6,7 @@ namespace Chetch{
 class FirmataCallbacks{
 	
     public:
-		static void init(FirmataCallbacks *fcb, int options = 0);
+		static void init(FirmataCallbacks *fcb, int options = 0, char* boardID = NULL);
 		static void stringCallback(char *s);
 		static void sysexCallback(byte command, byte argc, byte *argv);
 		static void setPinModeCallback(byte pin, int mode);
@@ -22,6 +22,8 @@ class FirmataCallbacks{
 		/*
 		* instance props and methods
 		*/
+
+		char* boardID; //used to identify this board to other boards/controllers
 
 		/* analog inputs */
 		int analogInputsToReport = 0;		// bitwise array to store pin reporting
