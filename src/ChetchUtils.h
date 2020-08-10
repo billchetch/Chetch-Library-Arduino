@@ -10,16 +10,16 @@ class Utils{
     static char hexDigit(char c);
     
   public:
-    static char *urlencode(char* dst, char* src, char *specialChars = "$&+,/:;=?@ <>#%{}|~[]`");
+    static char *urlencode(char* dst, char* src, const char *specialChars = "$&+,/:;=?@ <>#%{}|~[]`");
     static char *urldecode(char* src);
-    static int parseNameValuePair(char *s2parse, char *delimiter, char *results[], int maxResults, boolean decodeUrl);
+    static int parseNameValuePair(char *s2parse, const char *delimiter, char *results[], int maxResults, boolean decodeUrl);
     static int parseQueryString(char *s2parse, char *results[], int maxResults, boolean decodeUrl = true);
-    static char *getValue(char *pname, char *results[], int resultsCount);
+    static char *getValue(const char *pname, char *results[], int resultsCount);
     static void addValue(char *params[], char *pname, char *pvalue, int i);
-    static char *buildNameValueString(char *str, char *params[], int paramCount, char *delimiter, boolean encodeUrl);
+    static char *buildNameValueString(char *str, char *params[], int paramCount, const char *delimiter, boolean encodeUrl);
     static char *buildQueryString(char *str, char *params[], int paramCount, boolean encodeUrl = true);
 	
-    static char *getStringFromProgmem(char *buffer, byte idx, char* const stringTable[]);
+    static char *getStringFromProgmem(char *buffer, byte idx, const char* const stringTable[]);
 };
 
 } //end namespace

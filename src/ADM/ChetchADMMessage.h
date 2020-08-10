@@ -79,13 +79,13 @@ namespace Chetch{
        * Values are char arrays with a corresponding 'key' and thereofre not positional.  They
        * are currently used for outgoing messages.
        */
-      char *getValue(char *key); 
-      void addValue(char *key, char *value, boolean allowNullOrEmpty);
-      void addByte(char *key, byte value);	
-      void addLong(char *key, unsigned long value);
-      void addInt(char *key, int value);
-      void addBool(char *key, bool value);
-      void setValue(char *value); //adds the 'Value' value with the passed string
+      char *getValue(const char *key); 
+      void addValue(const char *key, const char *value, boolean allowNullOrEmpty);
+      void addByte(const char *key, byte value);	
+      void addLong(const char *key, unsigned long value);
+      void addInt(const char *key, int value);
+      void addBool(const char *key, bool value);
+      void setValue(const char *value); //adds the 'Value' value with the passed string
       
       void serialize(char *s, boolean encodeUrl = true);
       //char *serialize(boolean encodeUrl = true);

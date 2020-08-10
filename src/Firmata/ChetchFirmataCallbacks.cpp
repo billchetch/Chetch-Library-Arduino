@@ -3,7 +3,7 @@
 namespace Chetch{
 
 FirmataCallbacks *FirmataCallbacks::FCB = NULL;
-void FirmataCallbacks::init(FirmataCallbacks* fcb, int options = 0, char* boardID = NULL) {
+void FirmataCallbacks::init(FirmataCallbacks* fcb, const char* boardID, int options = 0) {
 
 	if (FirmataCallbacks::FCB == NULL) {
 		fcb->boardID = boardID;

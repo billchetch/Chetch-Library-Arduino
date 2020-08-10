@@ -5,7 +5,7 @@ namespace Chetch{
   ArduinoDevice::ArduinoDevice(){
   }
   
-  ArduinoDevice::ArduinoDevice(byte tgt, byte cat, char *did = NULL, char *dn = NULL){
+  ArduinoDevice::ArduinoDevice(byte tgt, byte cat, char *did, char *dn){
     target = tgt;
     category = cat;
 

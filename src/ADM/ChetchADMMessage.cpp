@@ -37,7 +37,7 @@ namespace Chetch{
   /*
    * Helper functions for processing byte arrays
    */
-  long ADMMessage::bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian = true){
+  long ADMMessage::bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian){
     //TODO:: allow for littleEndian to be false (i.e. big endian)
     long retVal = 0L;
     for(int i = 0; i < numberOfBytes; i++){
@@ -46,7 +46,7 @@ namespace Chetch{
     return retVal;
   }
 
-  unsigned long ADMMessage::bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian = true){
+  unsigned long ADMMessage::bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian){
     //TODO:: allow for littleEndian to be false (i.e. big endian)
     unsigned long retVal = 0L;
     for(int i = 0; i < numberOfBytes; i++){
@@ -55,7 +55,7 @@ namespace Chetch{
     return retVal;
   }
 
-  int ADMMessage::bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian = true){
+  int ADMMessage::bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian){
     return (int)ADMMessage::bytesToLong(bytes, numberOfBytes, littleEndian); 
   }
 
@@ -89,7 +89,7 @@ namespace Chetch{
      }
   }
 
-  ADMMessage::ADMMessage(byte messageType = 0, byte messageTag = 0, byte messageTarget = 0, byte messageCommand = 0){
+  ADMMessage::ADMMessage(byte messageType, byte messageTag, byte messageTarget, byte messageCommand){
     type = messageType;
     tag = messageTag;
     target = messageTarget;
@@ -178,11 +178,11 @@ namespace Chetch{
    * Values: key referenced strings
    */
 
-  char *ADMMessage::getValue(char *key){
+  char *ADMMessage::getValue(const char *key){
     return Utils::getValue(key, values, valuesCount);
   }
   
-  void ADMMessage::addValue(char *key, char *value, boolean allowNullOrEmpty){
+  void ADMMessage::addValue(const char *key, const char *value, boolean allowNullOrEmpty){
     if(valuesCount == maxValues){
       return;
     }
@@ -210,29 +210,29 @@ namespace Chetch{
     valuesCount++;
   }
 
-  void ADMMessage::addInt(char *key, int value){
+  void ADMMessage::addInt(const char *key, int value){
     static char c[6];
     sprintf(c, "%d", value);
     addValue(key, c, false);
   }
 
-  void ADMMessage::addLong(char *key, unsigned long value){
+  void ADMMessage::addLong(const char *key, unsigned long value){
     static char c[16];
     sprintf(c, "%lu", value);
     addValue(key, c, false);
   }
 
-  void ADMMessage::addBool(char *key, bool value){
+  void ADMMessage::addBool(const char *key, bool value){
     addByte(key, value ? 1 : 0);
   }
 
-  void ADMMessage::addByte(char *key, byte value){
+  void ADMMessage::addByte(const char *key, byte value){
     static char c[3];
     sprintf(c, "%d", value);
     addValue(key, c, false);
   }
 
-  void ADMMessage::setValue(char *value){
+  void ADMMessage::setValue(const char *value){
     addValue("Value", value, true);  
   }
   
@@ -247,7 +247,7 @@ namespace Chetch{
     return Utils::buildQueryString(str, values, valuesCount, encodeUrl);
   }*/
 
-  void ADMMessage::serialize(char* s, boolean encodeUrl = true){
+  void ADMMessage::serialize(char* s, boolean encodeUrl){
     addByte("Type", type);
     addByte("Tag", tag);
     addByte("Target", target);

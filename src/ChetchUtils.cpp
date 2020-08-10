@@ -7,7 +7,7 @@ char Utils::hexDigit(char c)
   return "0123456789ABCDEF"[c & 0x0F];
 }
 
-char *Utils::urlencode(char *dst, char *src, char *specialChars = "$&+,/:;=?@ <>#%{}|~[]`")
+char *Utils::urlencode(char *dst, char *src, const char *specialChars)
 {  
    char *d = dst;
    char c;
@@ -71,7 +71,7 @@ char *Utils::urldecode(char *src){
   return src;
 }
 
-int Utils::parseNameValuePair(char *s2parse, char *delimiter, char *results[], int maxResults, boolean decodeUrl) {
+int Utils::parseNameValuePair(char *s2parse, const char *delimiter, char *results[], int maxResults, boolean decodeUrl) {
   int ct = 0;
   while (s2parse && *s2parse && ct < 2*maxResults) {
     results[ct] = strsep(&s2parse, delimiter);
@@ -92,7 +92,7 @@ int Utils::parseQueryString(char *s2parse, char *results[], int maxResults, bool
   return Utils::parseNameValuePair(s2parse, "&", results, maxResults, decodeUrl);
 }
 
-char *Utils::getValue(char *pname, char *results[], int resultsCount){
+char *Utils::getValue(const char *pname, char *results[], int resultsCount){
   for(int i = 0; i < 2*resultsCount; i+=2){
     if(strcasecmp(pname, results[i]) == 0)return results[i + 1];
   }
@@ -105,7 +105,7 @@ void Utils::addValue(char *params[], char *pname, char *pvalue, int i){
   params[i + 1] = pvalue;
 }
 
-char *Utils::buildNameValueString(char *str, char *params[], int paramCount, char *delimiter, boolean encodeUrl){
+char *Utils::buildNameValueString(char *str, char *params[], int paramCount, const char *delimiter, boolean encodeUrl){
 	char *param;
 	char *value;
 	char *buf1;
@@ -148,11 +148,11 @@ char *Utils::buildNameValueString(char *str, char *params[], int paramCount, cha
 	return str;
 }
 
-char *Utils::buildQueryString(char *str, char *params[], int paramCount, boolean encodeUrl = true){
+char *Utils::buildQueryString(char *str, char *params[], int paramCount, boolean encodeUrl){
   return Utils::buildNameValueString(str, params, paramCount, "&", encodeUrl);
 }
 
-char *Utils::getStringFromProgmem(char *buffer, byte idx, char* const stringTable[]){
+char *Utils::getStringFromProgmem(char *buffer, byte idx, const char* const stringTable[]){
 	//buffer[0] = 0;
 	strcpy_P(buffer, (char *)pgm_read_word(&(stringTable[idx])));
 	return buffer; 

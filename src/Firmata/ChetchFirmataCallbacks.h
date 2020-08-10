@@ -6,7 +6,7 @@ namespace Chetch{
 class FirmataCallbacks{
 	
     public:
-		static void init(FirmataCallbacks *fcb, int options = 0, char* boardID = NULL);
+		static void init(FirmataCallbacks *fcb, const char* boardID, int options = 0);
 		static void stringCallback(char *s);
 		static void sysexCallback(byte command, byte argc, byte *argv);
 		static void setPinModeCallback(byte pin, int mode);
