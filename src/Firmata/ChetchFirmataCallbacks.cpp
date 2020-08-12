@@ -16,9 +16,9 @@ void FirmataCallbacks::init(FirmataCallbacks* fcb, const char* boardID, int opti
 		Firmata.attach(SET_PIN_MODE, FirmataCallbacks::setPinModeCallback);
 		Firmata.attach(SET_DIGITAL_PIN_VALUE, FirmataCallbacks::setPinValueCallback);
 		Firmata.attach(ANALOG_MESSAGE, FirmataCallbacks::analogWriteCallback);
-		//Firmata.attach(REPORT_ANALOG, FirmataCallbacks::reportAnalogCallback);
-		//Firmata.attach(REPORT_DIGITAL, FirmataCallbacks::reportDigitalCallback);
-		//Firmata.attach(SYSTEM_RESET, FirmataCallbacks::systemResetCallback);
+		Firmata.attach(REPORT_ANALOG, FirmataCallbacks::reportAnalogCallback);
+		Firmata.attach(REPORT_DIGITAL, FirmataCallbacks::reportDigitalCallback);
+		Firmata.attach(SYSTEM_RESET, FirmataCallbacks::systemResetCallback);
 		
 		Firmata.begin(57600);
 	}
@@ -65,6 +65,11 @@ void FirmataCallbacks::handleString(char *s) {
 /*==============================================================================
 * SYSEX-BASED commands
 *============================================================================*/
+void FirmataCallbacks::processInput() {
+	while (Firmata.available()) {
+		Firmata.processInput();
+	}
+}
 
 void FirmataCallbacks::handleSysex(byte command, byte argc, byte *argv)
 {
@@ -336,6 +341,29 @@ void FirmataCallbacks::handleReportDigital(byte port, int value)
 	// as analog when sampling the analog inputs.  Likewise, while
 	// scanning digital pins, portConfigInputs will mask off values from any
 	// pins configured as analog
+}
+
+void FirmataCallbacks::checkDigitalInputs(void)
+{
+	/* Using non-looping code allows constants to be given to readPort().
+	* The compiler will apply substantial optimizations if the inputs
+	* to readPort() are compile-time constants. */
+	if (TOTAL_PORTS > 0 && reportPINs[0]) outputPort(0, readPort(0, portConfigInputs[0]), false);
+	if (TOTAL_PORTS > 1 && reportPINs[1]) outputPort(1, readPort(1, portConfigInputs[1]), false);
+	if (TOTAL_PORTS > 2 && reportPINs[2]) outputPort(2, readPort(2, portConfigInputs[2]), false);
+	if (TOTAL_PORTS > 3 && reportPINs[3]) outputPort(3, readPort(3, portConfigInputs[3]), false);
+	if (TOTAL_PORTS > 4 && reportPINs[4]) outputPort(4, readPort(4, portConfigInputs[4]), false);
+	if (TOTAL_PORTS > 5 && reportPINs[5]) outputPort(5, readPort(5, portConfigInputs[5]), false);
+	if (TOTAL_PORTS > 6 && reportPINs[6]) outputPort(6, readPort(6, portConfigInputs[6]), false);
+	if (TOTAL_PORTS > 7 && reportPINs[7]) outputPort(7, readPort(7, portConfigInputs[7]), false);
+	if (TOTAL_PORTS > 8 && reportPINs[8]) outputPort(8, readPort(8, portConfigInputs[8]), false);
+	if (TOTAL_PORTS > 9 && reportPINs[9]) outputPort(9, readPort(9, portConfigInputs[9]), false);
+	if (TOTAL_PORTS > 10 && reportPINs[10]) outputPort(10, readPort(10, portConfigInputs[10]), false);
+	if (TOTAL_PORTS > 11 && reportPINs[11]) outputPort(11, readPort(11, portConfigInputs[11]), false);
+	if (TOTAL_PORTS > 12 && reportPINs[12]) outputPort(12, readPort(12, portConfigInputs[12]), false);
+	if (TOTAL_PORTS > 13 && reportPINs[13]) outputPort(13, readPort(13, portConfigInputs[13]), false);
+	if (TOTAL_PORTS > 14 && reportPINs[14]) outputPort(14, readPort(14, portConfigInputs[14]), false);
+	if (TOTAL_PORTS > 15 && reportPINs[15]) outputPort(15, readPort(15, portConfigInputs[15]), false);
 }
 
 } //end namespace
