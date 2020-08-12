@@ -34,7 +34,7 @@ namespace Chetch{
     return devices[idx];
   }
 
-  ArduinoDevice *ArduinoDeviceManager::addDevice(byte target, byte category, char *id = NULL, char *dname = NULL){
+  ArduinoDevice *ArduinoDeviceManager::addDevice(byte target, byte category, char *id, char *dname){
     if(target == 0 || deviceCount == MAX_DEVICES)return NULL;
         
     if(getDevice(target) != NULL){
