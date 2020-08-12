@@ -15,6 +15,7 @@ class FirmataCallbacks{
 		static void digitalWriteCallback(byte port, int value);
 		static void reportAnalogCallback(byte analogPin, int value);
 		static void reportDigitalCallback(byte port, int value);
+		static void systemResetCallback();
 
 		static FirmataCallbacks* FCB;
 
@@ -23,7 +24,7 @@ class FirmataCallbacks{
 		* instance props and methods
 		*/
 
-		char* boardID; //used to identify this board to other boards/controllers
+		const char* boardID; //used to identify this board to other boards/controllers
 
 		/* analog inputs */
 		int analogInputsToReport = 0;		// bitwise array to store pin reporting
@@ -50,6 +51,7 @@ class FirmataCallbacks{
 		virtual void handleDigitalWrite(byte port, int value);
 		virtual void handleReportAnalog(byte analogPin, int value);
 		virtual void handleReportDigital(byte port, int value);
+		virtual void handleSystemReset();
 
 		void processInput();
 		void outputPort(byte portNumber, byte portValue, byte forceSend);
