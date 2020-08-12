@@ -48,9 +48,12 @@ class FirmataCallbacks{
 		virtual void handleSetPinValue(byte pin, int value);
 		virtual void handleAnalogWrite(byte pin, int value);
 		virtual void handleDigitalWrite(byte port, int value);
-		virtual void outputPort(byte portNumber, byte portValue, byte forceSend);
 		virtual void handleReportAnalog(byte analogPin, int value);
 		virtual void handleReportDigital(byte port, int value);
+
+		void processInput();
+		void outputPort(byte portNumber, byte portValue, byte forceSend);
+		void checkDigitalInputs(void);
 };
 
 } //end namespace
