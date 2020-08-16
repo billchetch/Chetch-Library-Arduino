@@ -22,7 +22,8 @@ namespace Chetch{
       static const byte TYPE_RESET = 16;
       static const byte TYPE_INITIALISE = 17;
       static const byte TYPE_DATA = 18; 
-
+	  static const byte TYPE_INITIALISE_RESPONSE = 28;
+	  
       static const byte COMMAND_TYPE_SEND = 1;
       static const byte COMMAND_TYPE_RESET = 2;
       static const byte COMMAND_TYPE_INITIALISE = 3;
@@ -85,6 +86,9 @@ namespace Chetch{
       void addLong(const char *key, unsigned long value);
       void addInt(const char *key, int value);
       void addBool(const char *key, bool value);
+	  void addFloat(const char *key, float value, int precision = 1, int width = 4);
+	  void addDouble(const char *key, double value, int precision = 1, int width = 4);
+
       void setValue(const char *value); //adds the 'Value' value with the passed string
       
       void serialize(char *s, boolean encodeUrl = true);

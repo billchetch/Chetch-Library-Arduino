@@ -62,6 +62,11 @@ void FirmataCallbacks::systemResetCallback() {
 //END STATIC
 
 //Instance methods
+void FirmataCallbacks::begin(const char * boardID, int options) {
+	init(this, boardID, options);
+}
+
+
 void FirmataCallbacks::handleString(char *s) {
 	//NOT USED (yet)
 }
@@ -356,15 +361,16 @@ void FirmataCallbacks::handleSystemReset()
 		// otherwise, pins default to digital output
 		if (IS_PIN_ANALOG(i)) {
 			// turns off pullup, configures everything
-			setPinModeCallback(i, PIN_MODE_ANALOG);
+			handleSetPinMode(i, PIN_MODE_ANALOG);
 		}
 		else if (IS_PIN_DIGITAL(i)) {
 			// sets the output to 0, configures portConfigInputs
-			setPinModeCallback(i, OUTPUT);
+			handleSetPinMode(i, OUTPUT);
 		}
 
 		//servoPinMap[i] = 255;
 	}
+
 	// by default, do not report any analog inputs
 	analogInputsToReport = 0;
 
@@ -387,7 +393,14 @@ void FirmataCallbacks::handleSystemReset()
 /*
 * Non input driven functions
 */
-void FirmataCallbacks::processInput() {
+
+void FirmataCallbacks::loop() {
+	checkDigitalInputs();
+	processSerialInput();
+	//analog stuff with sampling
+}
+
+void FirmataCallbacks::processSerialInput() {
 	while (Firmata.available()) {
 		Firmata.processInput();
 	}
@@ -425,6 +438,16 @@ void FirmataCallbacks::checkDigitalInputs(void)
 	if (TOTAL_PORTS > 13 && reportPINs[13]) outputPort(13, readPort(13, portConfigInputs[13]), false);
 	if (TOTAL_PORTS > 14 && reportPINs[14]) outputPort(14, readPort(14, portConfigInputs[14]), false);
 	if (TOTAL_PORTS > 15 && reportPINs[15]) outputPort(15, readPort(15, portConfigInputs[15]), false);
+}
+
+bool FirmataCallbacks::elapsed(int interval) {
+	if (millisElapsed == -1 || millis() - millisElapsed > interval) {
+		millisElapsed = millis();
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 } //end namespace

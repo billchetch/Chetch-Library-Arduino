@@ -6,6 +6,8 @@ namespace Chetch{
       static const byte CATEGORY_DIAGNOSTICS = 1;
       static const byte CATEGORY_IR_TRANSMITTER = 2;
       static const byte CATEGORY_IR_RECEIVER = 3;
+	  static const byte CATEGORY_TEMPERATURE_SENSOR = 4;
+	  static const byte CATEGORY_COUNTER = 5;
 
       byte target = 0;
       byte category = 0;

@@ -27,10 +27,7 @@ namespace Chetch{
       ArduinoDeviceManager();
       ~ArduinoDeviceManager();
 
-      int getDeviceCount(){
-        return deviceCount;
-      }
-
+	  int getDeviceCount();
       void initialise(); //should be when ADM on computer connects
       void reset();
       

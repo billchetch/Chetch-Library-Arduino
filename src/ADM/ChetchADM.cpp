@@ -27,9 +27,12 @@ namespace Chetch{
     reset();
   }
 
+  int ArduinoDeviceManager::getDeviceCount(){
+	  return deviceCount;
+  }
 
   ArduinoDevice *ArduinoDeviceManager::getDevice(byte target){
-    if(target == 0)return NULL;
+    if(target == 0 || target < 1 || target > deviceCount)return NULL;
     byte idx = target - 1;
     return devices[idx];
   }

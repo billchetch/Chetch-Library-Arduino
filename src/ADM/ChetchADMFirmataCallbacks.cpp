@@ -69,6 +69,14 @@ const char *const MESSAGES_TABLE[] PROGMEM = {
 namespace Chetch{
 	ArduinoDeviceManager ADMFirmataCallbacks::ADM;
 
+	//Override this to perform initialisation based on computer-side connection to the board
+	//this is NOT the same as the board code constructing an instance (or calling begin) as these
+	//may already have happend then the computer disconnects and then connects again
+	void ADMFirmataCallbacks::initialise() {
+		ADM.initialise();
+		handleSystemReset();
+	}
+
 	void ADMFirmataCallbacks::sendMessage(ADMMessage *message) {
 		//IMPORTANT!!!: the serial connection can return messy data if this function is called too rapidly
 		//might be worth putting in a small 'delay' here... Having said that this problem has so far (5/5/20) only
@@ -110,10 +118,11 @@ namespace Chetch{
 	
 		switch (message->type) {
 			case ADMMessage::TYPE_INITIALISE:
-				ADM.initialise();
-				response = new ADMMessage(2);
-				response->type = ADMMessage::TYPE_INFO;
+				initialise();
+				response = new ADMMessage(4);
+				response->type = ADMMessage::TYPE_INITIALISE_RESPONSE;
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
+				response->addInt(Utils::getStringFromProgmem(stBuffer, 7, PARAMS_TABLE), ADM.getDeviceCount());
 				response->setValue(Utils::getStringFromProgmem(stBuffer, 0, MESSAGES_TABLE));
 				respond(message, response);
 				break;
@@ -158,12 +167,12 @@ namespace Chetch{
 
 			case ADMMessage::TYPE_CONFIGURE:
 				if (message->target == 0) { //configure board
-					response = new ADMMessage(1);
+					response = new ADMMessage(5);
 					response->setValue(Utils::getStringFromProgmem(stBuffer, 4, MESSAGES_TABLE));
 				} else { //configure device
 					bool initial = true;
 					if (device == NULL) { //this is a new device
-						response = new ADMMessage(2);
+						response = new ADMMessage(8);
 						char deviceId[16];
 						char deviceName[32];
 						message->argumentAsCharArray(1, deviceId);
@@ -172,7 +181,7 @@ namespace Chetch{
 						response->addValue("DID", device->id, false);
 						response->addValue("DN", device->name, false);
 					} else { //we already have a device added
-						response = new ADMMessage(1);
+						response = new ADMMessage(5);
 						initial = false;
 						response->setValue(Utils::getStringFromProgmem(stBuffer, 5, MESSAGES_TABLE));
 					}

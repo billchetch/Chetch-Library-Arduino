@@ -222,6 +222,18 @@ namespace Chetch{
     addValue(key, c, false);
   }
 
+  void ADMMessage::addFloat(const char *key, float value, int precision, int width) {
+	static char c[16];
+	dtostrf(value, width, precision, c);
+	addValue(key, c, false);
+  }
+
+  void ADMMessage::addDouble(const char *key, double value, int precision, int width) {
+	  static char c[20];
+	  dtostrf(value, width, precision, c);
+	  addValue(key, c, false);
+  }
+
   void ADMMessage::addBool(const char *key, bool value){
     addByte(key, value ? 1 : 0);
   }
