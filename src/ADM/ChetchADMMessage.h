@@ -22,7 +22,7 @@ namespace Chetch{
       static const byte TYPE_RESET = 16;
       static const byte TYPE_INITIALISE = 17;
       static const byte TYPE_DATA = 18; 
-	  static const byte TYPE_INITIALISE_RESPONSE = 28;
+      static const byte TYPE_INITIALISE_RESPONSE = 28;
 	  
       static const byte COMMAND_TYPE_SEND = 1;
       static const byte COMMAND_TYPE_RESET = 2;
@@ -32,7 +32,9 @@ namespace Chetch{
       static const byte COMMAND_TYPE_STOP = 6;
       static const byte COMMAND_TYPE_OPEN = 7;
       static const byte COMMAND_TYPE_CLOSE = 8;
-      static const byte COMMAND_TYPE_RECORD = 9;
+      static const byte COMMAND_TYPE_SAVE = 10;
+      static const byte COMMAND_TYPE_READ = 11;
+     
 
     private:
       /*

@@ -12,9 +12,9 @@ namespace Chetch{
 			virtual void initialise();
 			virtual void sendMessage(ADMMessage *message);
 			virtual void respond(ADMMessage *message, ADMMessage *response);
-			virtual void configureDevice(bool initial, ArduinoDevice *device, ADMMessage *message, ADMMessage *response);
+			virtual void configure(ADMMessage *message, ADMMessage *response);
 			virtual void handleMessage(ADMMessage *message);
 			virtual void handleString(char *s);
-      
+			virtual bool handleCommand(ADMMessage *message, ADMMessage *response);
   };
 } //end namespace	

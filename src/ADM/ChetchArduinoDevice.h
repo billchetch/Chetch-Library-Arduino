@@ -1,4 +1,8 @@
+#ifndef CHETCH_ADM_ARDUINODEVICE_h
+#define CHETCH_ADM_ARDUINODEVICE_h
+
 #include <Arduino.h>
+#include "ChetchADMMessage.h"
 
 namespace Chetch{
   class ArduinoDevice{
@@ -16,5 +20,11 @@ namespace Chetch{
 
       ArduinoDevice();
       ArduinoDevice(byte target, byte category, char *did = NULL, char *dn = NULL);
+
+	  virtual void handleStatusRequest(ADMMessage *message, ADMMessage *response);
+	  virtual void configure(bool initial, ADMMessage *message, ADMMessage *response);
+	  virtual bool handleCommand(ADMMessage *message, ADMMessage *response);
   };
-} //end namespace	
+} //end namespace
+
+#endif

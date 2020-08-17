@@ -95,8 +95,13 @@ namespace Chetch{
 		sendMessage(response);
 	}
 
-	void ADMFirmataCallbacks::configureDevice(bool initial, ArduinoDevice *device, ADMMessage *message, ADMMessage *response) {
+	void ADMFirmataCallbacks::configure(ADMMessage *message, ADMMessage *response) {
 		//provides a hook to prepare before use
+	}
+
+	bool ADMFirmataCallbacks::handleCommand(ADMMessage *message, ADMMessage *response) {
+		//a hook.. return true to send response
+		return false;
 	}
 
 	void ADMFirmataCallbacks::handleMessage(ADMMessage *message) {
@@ -154,6 +159,8 @@ namespace Chetch{
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 9, PARAMS_TABLE), device->category);
 					response->addValue(Utils::getStringFromProgmem(stBuffer, 10, PARAMS_TABLE), device->id, false);
 					response->addValue(Utils::getStringFromProgmem(stBuffer, 11, PARAMS_TABLE), device->name, false);
+
+					device->handleStatusRequest(message, response);
 				}
 				else {
 					response = new ADMMessage(1);
@@ -169,6 +176,7 @@ namespace Chetch{
 				if (message->target == 0) { //configure board
 					response = new ADMMessage(5);
 					response->setValue(Utils::getStringFromProgmem(stBuffer, 4, MESSAGES_TABLE));
+					configure(message, response);
 				} else { //configure device
 					bool initial = true;
 					if (device == NULL) { //this is a new device
@@ -185,7 +193,7 @@ namespace Chetch{
 						initial = false;
 						response->setValue(Utils::getStringFromProgmem(stBuffer, 5, MESSAGES_TABLE));
 					}
-					configureDevice(initial, device, message, response);
+					device->configure(initial, message, response);
 				}
 				response->type = ADMMessage::TYPE_CONFIGURE_RESPONSE;
 				respond(message, response);
@@ -197,6 +205,16 @@ namespace Chetch{
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 12, PARAMS_TABLE), millis());
 				respond(message, response);
+				break;
+
+			case ADMMessage::TYPE_COMMAND:
+				response = new ADMMessage(8);
+				response->type = ADMMessage::TYPE_DATA;
+				if (message->target == 0) {
+					if(handleCommand(message, response))respond(message, response);
+				} else if(device != NULL) {
+					if(device->handleCommand(message, response))respond(message, response);
+				}
 				break;
 
 			default:

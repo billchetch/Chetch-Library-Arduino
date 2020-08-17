@@ -24,4 +24,17 @@ namespace Chetch{
     }
   }
 
+
+  void ArduinoDevice::handleStatusRequest(ADMMessage *message, ADMMessage *response) {
+	  //A hook
+  }
+
+  void ArduinoDevice::configure(bool initial, ADMMessage *message, ADMMessage *response) {
+	  //A hook
+  }
+
+  bool ArduinoDevice::handleCommand(ADMMessage *message, ADMMessage *response) {
+	  //A hook... return true to send response, false to cancel send
+	  return false;
+  }
 } //end namespace
