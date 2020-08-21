@@ -1,6 +1,8 @@
 #include "ChetchUtils.h"
 #include "ChetchADM.h"
 #include "devices/ChetchDS18B20Array.h"
+#include "devices/ChetchJSN_SR04T.h"
+#include "devices/ChetchIRReceiver.h"
 
 const char DS18B20[] PROGMEM = "DS18B20";
 const char JSN_SR04T[] PROGMEM = "JSN-SR04T";
@@ -54,23 +56,35 @@ namespace Chetch{
       return NULL; //already exists a device ... this is an error that should be handled
     }
         
-	ArduinoDevice *device;
+	ArduinoDevice *device = NULL;
+	char stBuffer[16];
 
 	switch (category) {
 	case ArduinoDevice::CATEGORY_TEMPERATURE_SENSOR:
-		char stBuffer[16];
 		if (strcmp(dname, Utils::getStringFromProgmem(stBuffer, 0, DEVICES_TABLE)) == 0) {
 			device = new DS18B20Array(target, category, id, dname);
-		} else {
-			device = new ArduinoDevice(target, category, id, dname);
+		} 
+		break;
+
+	case ArduinoDevice::CATEGORY_RANGE_FINDER:
+		if (strcmp(dname, Utils::getStringFromProgmem(stBuffer, 1, DEVICES_TABLE)) == 0) {
+			device = new JSN_SR04T(target, category, id, dname);
 		}
 		break;
 
+	case ArduinoDevice::CATEGORY_IR_RECEIVER:
+		device = new IRReceiver(target, category, id, dname);
+		break;
+
 	default:
-		device = new ArduinoDevice(target, category, id, dname);
+		device = NULL;
 		break;
 	}
 	
+	if (device == NULL) {
+		device = new ArduinoDevice(target, category, id, dname);
+	}
+
     devices[target - 1] = device;
     deviceCount++;
         

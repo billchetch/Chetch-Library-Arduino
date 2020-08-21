@@ -12,11 +12,12 @@ namespace Chetch{
       static const byte CATEGORY_IR_RECEIVER = 3;
 	  static const byte CATEGORY_TEMPERATURE_SENSOR = 4;
 	  static const byte CATEGORY_COUNTER = 5;
+	  static const byte CATEGORY_RANGE_FINDER = 6;
 
       byte target = 0;
       byte category = 0;
-      char id[16];
-      char name[32];
+      char id[8];
+      char name[10];
 
       ArduinoDevice();
       ArduinoDevice(byte target, byte category, char *did = NULL, char *dn = NULL);

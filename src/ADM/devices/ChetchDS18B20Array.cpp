@@ -1,4 +1,15 @@
+#include "ChetchUtils.h"
 #include "ChetchDS18B20Array.h"
+
+const char SENSOR_COUNT[] PROGMEM = "SensorCount";
+const char ONE_WIRE_PIN[] PROGMEM = "OneWirePin";
+const char TEMPERATURE[] PROGMEM = "Temperature";
+
+const char *const PARAMS_TABLE[] PROGMEM = {
+	SENSOR_COUNT,
+	ONE_WIRE_PIN,
+	TEMPERATURE
+};
 
 namespace Chetch{
 
@@ -14,19 +25,15 @@ namespace Chetch{
 	void DS18B20Array::configure(bool initial, ADMMessage *message, ADMMessage *response) {
 		ArduinoDevice::configure(initial, message, response);
 
-		if (initial) {
-			if (tempSensors != NULL)delete tempSensors;
-			if (oneWire != NULL)delete oneWire;
-		}
-
 		if (oneWire == NULL) {
 			int owPin = message->argumentAsInt(3);
 			oneWire = new OneWire(owPin);
 			tempSensors = new DallasTemperature(oneWire);
 			tempSensors->begin();
 			numberOfTempSensors = tempSensors->getDeviceCount();
-			response->addInt("SensorCount", numberOfTempSensors);
-			response->addInt("OneWirePin", owPin);
+			char stBuffer[16];
+			response->addInt(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), numberOfTempSensors);
+			response->addInt(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), owPin);
 		}
 	}
 
@@ -38,12 +45,13 @@ namespace Chetch{
 					DeviceAddress tempDeviceAddress;
 					response->type = ADMMessage::TYPE_DATA;
 					response->target = target;
-					response->addInt("SensorCount", numberOfTempSensors);
+					char stBuffer[16];
+					response->addInt(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), numberOfTempSensors);
 					char tempKey[16];
 					for (int i = 0; i < numberOfTempSensors; i++) {
 						tempSensors->getAddress(tempDeviceAddress, i);
 						float celsius = tempSensors->getTempC(tempDeviceAddress);
-						sprintf(tempKey, "Temperature-%d", i);
+						sprintf(tempKey, "%s-%d", Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), i);
 						response->addFloat(tempKey, celsius);
 					}
 				}

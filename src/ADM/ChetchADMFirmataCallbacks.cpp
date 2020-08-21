@@ -195,6 +195,7 @@ namespace Chetch{
 					}
 					device->configure(initial, message, response);
 				}
+				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
 				response->type = ADMMessage::TYPE_CONFIGURE_RESPONSE;
 				respond(message, response);
 				break;
