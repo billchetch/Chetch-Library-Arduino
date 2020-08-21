@@ -24,6 +24,9 @@ namespace Chetch{
     }
   }
 
+  ArduinoDevice::~ArduinoDevice() {
+	  //because declared virtual
+  }
 
   void ArduinoDevice::handleStatusRequest(ADMMessage *message, ADMMessage *response) {
 	  //A hook
@@ -37,4 +40,9 @@ namespace Chetch{
 	  //A hook... return true to send response, false to cancel send
 	  return false;
   }
+
+  ADMMessage* ArduinoDevice::loop() {
+	  return NULL;
+  }
+
 } //end namespace

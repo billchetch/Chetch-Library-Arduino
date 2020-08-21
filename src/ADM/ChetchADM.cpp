@@ -20,7 +20,7 @@ namespace Chetch{
     }
   }
 
-  void ArduinoDeviceManager::initialise(){
+  void ArduinoDeviceManager::initialise(ADMFirmataCallbacks* fcb){
     for(int i = 0; i < MAX_DEVICES; i++){
       if(devices[i] != NULL){
         delete devices[i];
@@ -29,10 +29,11 @@ namespace Chetch{
     }
     deviceCount = 0;
     initialised = true;
+	firmataCallbacks = fcb;
   }
 
   void ArduinoDeviceManager::reset(){
-    initialise();  
+    initialise(firmataCallbacks);
   }
   
   ArduinoDeviceManager::~ArduinoDeviceManager(){
@@ -89,5 +90,17 @@ namespace Chetch{
     deviceCount++;
         
     return device;
+  }
+
+  void ArduinoDeviceManager::loop() {
+	  ADMMessage *message;
+	  for (int i = 0; i < deviceCount; i++) {
+		  message = devices[i]->loop();
+		  if (message != NULL && firmataCallbacks != NULL) {
+			  firmataCallbacks->sendMessage(message);
+			  delete message;
+			  delay(1);
+		  }
+	  }
   }
 } //end namespace

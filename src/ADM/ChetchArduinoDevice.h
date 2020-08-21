@@ -5,6 +5,7 @@
 #include "ChetchADMMessage.h"
 
 namespace Chetch{
+  
   class ArduinoDevice{
     public:
       static const byte CATEGORY_DIAGNOSTICS = 1;
@@ -14,17 +15,19 @@ namespace Chetch{
 	  static const byte CATEGORY_COUNTER = 5;
 	  static const byte CATEGORY_RANGE_FINDER = 6;
 
-      byte target = 0;
+	  byte target = 0;
       byte category = 0;
       char id[8];
       char name[10];
 
-      ArduinoDevice();
+	  ArduinoDevice();
       ArduinoDevice(byte target, byte category, char *did = NULL, char *dn = NULL);
+	  virtual ~ArduinoDevice();
 
 	  virtual void handleStatusRequest(ADMMessage *message, ADMMessage *response);
 	  virtual void configure(bool initial, ADMMessage *message, ADMMessage *response);
 	  virtual bool handleCommand(ADMMessage *message, ADMMessage *response);
+	  virtual ADMMessage* loop();
   };
 } //end namespace
 

@@ -1,3 +1,6 @@
+#ifndef CHETCH_ADM_FIRMATA_CALLBACKS_H
+#define CHETCH_ADM_FIRMATA_CALLBACKS_H
+
 #include <Arduino.h>
 #include "../Firmata/ChetchFirmataCallbacks.h"
 #include "ChetchADMMessage.h"
@@ -5,6 +8,8 @@
 
 
 namespace Chetch{
+  class ArduinoDeviceManager;
+
   class ADMFirmataCallbacks : public FirmataCallbacks{
     	public:
 			static ArduinoDeviceManager ADM;
@@ -16,5 +21,7 @@ namespace Chetch{
 			virtual void handleMessage(ADMMessage *message);
 			virtual void handleString(char *s);
 			virtual bool handleCommand(ADMMessage *message, ADMMessage *response);
+			virtual void loop();
   };
 } //end namespace	
+#endif

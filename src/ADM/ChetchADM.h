@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "ChetchArduinoDevice.h"
+#include "ChetchADMFirmataCallbacks.h"
 
 #if defined(ARDUINO_AVR_UNO)
 	//Uno specific code
@@ -17,23 +18,29 @@
 #endif
 
 namespace Chetch{
+  class ADMFirmataCallbacks;
+
   class ArduinoDeviceManager{
     private:
       ArduinoDevice *devices[MAX_DEVICES];
       int deviceCount = 0;
       bool initialised = false;
+	  ADMFirmataCallbacks* firmataCallbacks = NULL; //set in initialise
 
-    public:
+    public:	  
       ArduinoDeviceManager();
       ~ArduinoDeviceManager();
 
 	  int getDeviceCount();
-      void initialise(); //should be when ADM on computer connects
+	  void initialise(ADMFirmataCallbacks* fcb); //should be when ADM on computer connects
       void reset();
       
-      ArduinoDevice *getDevice(byte target);
+	  ArduinoDevice *getDevice(byte target);
       ArduinoDevice *addDevice(byte target, byte category, char *id = NULL, char *dname = NULL);
+	  
+	  void loop();
+	  void sendMessage(ADMMessage* message);
+
   };
 } //end namespace
-
 #endif	

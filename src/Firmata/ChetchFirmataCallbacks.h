@@ -1,3 +1,6 @@
+#ifndef CHETCH_FIRMATA_CALLBACKS_H
+#define CHETCH_FIRMATA_CALLBACKS_H
+
 #include <Arduino.h>
 #include <Firmata.h>
 
@@ -64,3 +67,4 @@ class FirmataCallbacks{
 };
 
 } //end namespace
+#endif

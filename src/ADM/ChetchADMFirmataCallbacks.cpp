@@ -73,7 +73,7 @@ namespace Chetch{
 	//this is NOT the same as the board code constructing an instance (or calling begin) as these
 	//may already have happend then the computer disconnects and then connects again
 	void ADMFirmataCallbacks::initialise() {
-		ADM.initialise();
+		ADM.initialise(this);
 		handleSystemReset();
 	}
 
@@ -186,8 +186,8 @@ namespace Chetch{
 						message->argumentAsCharArray(1, deviceId);
 						message->argumentAsCharArray(2, deviceName);
 						device = ADM.addDevice(message->target, message->argumentAsByte(0), deviceId, deviceName);
-						response->addValue("DID", device->id, false);
-						response->addValue("DN", device->name, false);
+						response->addValue(Utils::getStringFromProgmem(stBuffer, 10, PARAMS_TABLE), device->id, false);
+						response->addValue(Utils::getStringFromProgmem(stBuffer, 11, PARAMS_TABLE), device->name, false);
 					} else { //we already have a device added
 						response = new ADMMessage(5);
 						initial = false;
@@ -204,7 +204,7 @@ namespace Chetch{
 				response = new ADMMessage(2);
 				response->type = ADMMessage::TYPE_PING_RESPONSE;
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
-				response->addInt(Utils::getStringFromProgmem(stBuffer, 12, PARAMS_TABLE), millis());
+				response->addLong(Utils::getStringFromProgmem(stBuffer, 12, PARAMS_TABLE), millis());
 				respond(message, response);
 				break;
 
@@ -234,5 +234,11 @@ namespace Chetch{
 		handleMessage(message);
 		delete message;
  	}
+
+	void ADMFirmataCallbacks::loop() {
+		FirmataCallbacks::loop();
+	
+		ADM.loop();
+	}
 
 } //end namespace
