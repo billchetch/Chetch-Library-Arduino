@@ -103,7 +103,7 @@ namespace Chetch{
 		maxValues = maxVals + 4; //add an extra 4 for the Type,Tag,Target,Command params
 		values = new char*[maxValues*2];
 	}
-        newID();
+    newID();
   };
 
   ADMMessage::~ADMMessage() {
@@ -117,7 +117,7 @@ namespace Chetch{
     
     if(maxValues > 0){
       for(int i = 0; i < 2*valuesCount; i++){
-	delete[] values[i];
+		delete[] values[i];
       }
       delete[] values;
     }

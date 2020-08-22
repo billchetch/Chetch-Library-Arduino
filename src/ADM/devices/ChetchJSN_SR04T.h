@@ -9,7 +9,7 @@ namespace Chetch{
 		byte _receivePin;
 
     public:
-		JSN_SR04T(byte tgt, byte cat, char *did, char *dn);
+		JSN_SR04T(byte tgt, byte cat, char *dn);
 		~JSN_SR04T();
 		void configure(bool initial, ADMMessage *message, ADMMessage *response);
 		bool handleCommand(ADMMessage *message, ADMMessage *response);

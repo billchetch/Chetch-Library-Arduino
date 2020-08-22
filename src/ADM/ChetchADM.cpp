@@ -3,6 +3,7 @@
 #include "devices/ChetchDS18B20Array.h"
 #include "devices/ChetchJSN_SR04T.h"
 #include "devices/ChetchIRReceiver.h"
+#include "devices/ChetchIRTransmitter.h"
 
 const char DS18B20[] PROGMEM = "DS18B20";
 const char JSN_SR04T[] PROGMEM = "JSN-SR04T";
@@ -50,7 +51,7 @@ namespace Chetch{
     return devices[idx];
   }
 
-  ArduinoDevice *ArduinoDeviceManager::addDevice(byte target, byte category, char *id, char *dname){
+  ArduinoDevice *ArduinoDeviceManager::addDevice(byte target, byte category, char *dname){
     if(target == 0 || deviceCount == MAX_DEVICES)return NULL;
         
     if(getDevice(target) != NULL){
@@ -58,23 +59,27 @@ namespace Chetch{
     }
         
 	ArduinoDevice *device = NULL;
-	char stBuffer[16];
+	char stBuffer[DEVICE_NAME_LENGTH];
 
 	switch (category) {
 	case ArduinoDevice::CATEGORY_TEMPERATURE_SENSOR:
 		if (strcmp(dname, Utils::getStringFromProgmem(stBuffer, 0, DEVICES_TABLE)) == 0) {
-			device = new DS18B20Array(target, category, id, dname);
+			device = new DS18B20Array(target, category, dname);
 		} 
 		break;
 
 	case ArduinoDevice::CATEGORY_RANGE_FINDER:
 		if (strcmp(dname, Utils::getStringFromProgmem(stBuffer, 1, DEVICES_TABLE)) == 0) {
-			device = new JSN_SR04T(target, category, id, dname);
+			device = new JSN_SR04T(target, category, dname);
 		}
 		break;
 
 	case ArduinoDevice::CATEGORY_IR_RECEIVER:
-		device = new IRReceiver(target, category, id, dname);
+		device = new IRReceiver(target, category, dname);
+		break;
+
+	case ArduinoDevice::CATEGORY_IR_TRANSMITTER:
+		device = new IRTransmitter(target, category, dname);
 		break;
 
 	default:
@@ -83,7 +88,7 @@ namespace Chetch{
 	}
 	
 	if (device == NULL) {
-		device = new ArduinoDevice(target, category, id, dname);
+		device = new ArduinoDevice(target, category, dname);
 	}
 
     devices[target - 1] = device;
@@ -97,6 +102,7 @@ namespace Chetch{
 	  for (int i = 0; i < deviceCount; i++) {
 		  message = devices[i]->loop();
 		  if (message != NULL && firmataCallbacks != NULL) {
+			  message->target = devices[i]->target;
 			  firmataCallbacks->sendMessage(message);
 			  delete message;
 			  delay(1);

@@ -13,7 +13,7 @@ const char *const PARAMS_TABLE[] PROGMEM = {
 
 namespace Chetch{
 
-	DS18B20Array::DS18B20Array(byte tgt, byte cat, char *did, char *dn) : ArduinoDevice(tgt, cat, did, dn) {
+	DS18B20Array::DS18B20Array(byte tgt, byte cat, char *dn) : ArduinoDevice(tgt, cat, dn) {
 		//empty
 	}
 
@@ -26,7 +26,7 @@ namespace Chetch{
 		ArduinoDevice::configure(initial, message, response);
 
 		if (oneWire == NULL) {
-			int owPin = message->argumentAsInt(3);
+			int owPin = message->argumentAsInt(2);
 			oneWire = new OneWire(owPin);
 			tempSensors = new DallasTemperature(oneWire);
 			tempSensors->begin();

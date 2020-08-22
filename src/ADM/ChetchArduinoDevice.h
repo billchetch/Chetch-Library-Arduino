@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include "ChetchADMMessage.h"
 
+#define DEVICE_NAME_LENGTH 10
+
 namespace Chetch{
   
   class ArduinoDevice{
@@ -17,11 +19,10 @@ namespace Chetch{
 
 	  byte target = 0;
       byte category = 0;
-      char id[8];
-      char name[10];
+      char name[DEVICE_NAME_LENGTH];
 
 	  ArduinoDevice();
-      ArduinoDevice(byte target, byte category, char *did = NULL, char *dn = NULL);
+      ArduinoDevice(byte target, byte category, char *dn = NULL);
 	  virtual ~ArduinoDevice();
 
 	  virtual void handleStatusRequest(ADMMessage *message, ADMMessage *response);

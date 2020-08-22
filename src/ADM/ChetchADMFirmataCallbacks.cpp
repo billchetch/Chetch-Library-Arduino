@@ -6,12 +6,14 @@
 //Uno specific code
 #define BOARD "UNO"
 #define LITTLE_ENDIAN true
-#define MAX_MESSAGE_SIZE 256
+#define MAX_MESSAGE_SIZE 128
+#define IR_TRANSMITTER_PIN 13
 #elif defined(ARDUINO_AVR_MEGA2560)
 //Mega 2560 specific code
 #define BOARD "MEGA2560"
 #define LITTLE_ENDIAN true
 #define MAX_MESSAGE_SIZE 512
+#define IR_TRANSMITTER_PIN 13
 #elif defined(ARDUINO_SAM_DUE)
 #define BOARD "SAM_DUE"
 #else
@@ -28,7 +30,7 @@ const char FREE_MEMORY_PARAM[] PROGMEM = "FM";
 const char DEVICE_COUNT_PARAM[] PROGMEM = "DC";
 const char DEVICE_TARGET_PARAM[] PROGMEM = "DT";
 const char DEVICE_CATEGORY_PARAM[] PROGMEM = "DG";
-const char DEVICE_ID_PARAM[] PROGMEM = "DTD";
+const char DEVICE_ID_PARAM[] PROGMEM = "DID"; 
 const char DEVICE_NAME_PARAM[] PROGMEM = "DN";
 const char MILLIS_PARAM[] PROGMEM = "MS";
 const char MAX_MESSAGE_SIZE_PARAM[] PROGMEM = "MM";
@@ -51,10 +53,10 @@ const char *const PARAMS_TABLE[] PROGMEM = {
 					DEVICE_COUNT_PARAM, 
 					DEVICE_TARGET_PARAM, 
 					DEVICE_CATEGORY_PARAM, 
-					DEVICE_ID_PARAM, 
+					DEVICE_ID_PARAM, //not used
 					DEVICE_NAME_PARAM,
 					MILLIS_PARAM,
-					MAX_MESSAGE_SIZE_PARAM	
+					MAX_MESSAGE_SIZE_PARAM
 					};
 
 const char *const MESSAGES_TABLE[] PROGMEM = {
@@ -86,7 +88,7 @@ namespace Chetch{
 		char *s = new char[MAX_MESSAGE_SIZE];
 		message->serialize(s);
 		Firmata.sendString(s);
-		delete s;
+		delete[] s;
 	}
 
 	void ADMFirmataCallbacks::respond(ADMMessage *message, ADMMessage *response) {
@@ -107,7 +109,7 @@ namespace Chetch{
 	void ADMFirmataCallbacks::handleMessage(ADMMessage *message) {
 		
 		ADMMessage *response = NULL;
-		char stBuffer[32];	//string table buffer				
+		char stBuffer[24];	//string table buffer				
 		
 		if (message == NULL) {
 			response = new ADMMessage(1);
@@ -157,7 +159,6 @@ namespace Chetch{
 					//values for device
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 8, PARAMS_TABLE), device->target);
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 9, PARAMS_TABLE), device->category);
-					response->addValue(Utils::getStringFromProgmem(stBuffer, 10, PARAMS_TABLE), device->id, false);
 					response->addValue(Utils::getStringFromProgmem(stBuffer, 11, PARAMS_TABLE), device->name, false);
 
 					device->handleStatusRequest(message, response);
@@ -181,12 +182,9 @@ namespace Chetch{
 					bool initial = true;
 					if (device == NULL) { //this is a new device
 						response = new ADMMessage(8);
-						char deviceId[16];
-						char deviceName[32];
-						message->argumentAsCharArray(1, deviceId);
-						message->argumentAsCharArray(2, deviceName);
-						device = ADM.addDevice(message->target, message->argumentAsByte(0), deviceId, deviceName);
-						response->addValue(Utils::getStringFromProgmem(stBuffer, 10, PARAMS_TABLE), device->id, false);
+						char deviceName[DEVICE_NAME_LENGTH];
+						message->argumentAsCharArray(1, deviceName);
+						device = ADM.addDevice(message->target, message->argumentAsByte(0), deviceName);
 						response->addValue(Utils::getStringFromProgmem(stBuffer, 11, PARAMS_TABLE), device->name, false);
 					} else { //we already have a device added
 						response = new ADMMessage(5);

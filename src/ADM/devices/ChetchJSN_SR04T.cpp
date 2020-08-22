@@ -9,7 +9,7 @@ const char *const PARAMS_TABLE[] PROGMEM = {
 
 namespace Chetch{
 
-	JSN_SR04T::JSN_SR04T(byte tgt, byte cat, char *did, char *dn) : ArduinoDevice(tgt, cat, did, dn) {
+	JSN_SR04T::JSN_SR04T(byte tgt, byte cat, char *dn) : ArduinoDevice(tgt, cat, dn) {
 		//empty
 	}
 
@@ -20,8 +20,8 @@ namespace Chetch{
 	void JSN_SR04T::configure(bool initial, ADMMessage *message, ADMMessage *response) {
 		ArduinoDevice::configure(initial, message, response);
 
-		_transmitPin = message->argumentAsByte(3);
-		_receivePin = message->argumentAsByte(4);
+		_transmitPin = message->argumentAsByte(2);
+		_receivePin = message->argumentAsByte(3);
 	}
 
 	bool JSN_SR04T::handleCommand(ADMMessage *message, ADMMessage *response) {

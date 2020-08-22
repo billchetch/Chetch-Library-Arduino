@@ -36,7 +36,7 @@ namespace Chetch{
       void reset();
       
 	  ArduinoDevice *getDevice(byte target);
-      ArduinoDevice *addDevice(byte target, byte category, char *id = NULL, char *dname = NULL);
+      ArduinoDevice *addDevice(byte target, byte category, char *dname = NULL);
 	  
 	  void loop();
 	  void sendMessage(ADMMessage* message);
