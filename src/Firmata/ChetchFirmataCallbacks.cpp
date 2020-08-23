@@ -3,7 +3,7 @@
 namespace Chetch{
 
 FirmataCallbacks *FirmataCallbacks::FCB = NULL;
-void FirmataCallbacks::init(FirmataCallbacks* fcb, const char* boardID, int options = 0) {
+void FirmataCallbacks::init(FirmataCallbacks* fcb, const char* boardID, int options) {
 
 	if (FirmataCallbacks::FCB == NULL) {
 		fcb->boardID = boardID;
@@ -55,9 +55,18 @@ void FirmataCallbacks::reportAnalogCallback(byte analogPin, int value) {
 void FirmataCallbacks::reportDigitalCallback(byte port, int value) {
 	FCB->handleReportDigital(port, value);
 }
+
+void FirmataCallbacks::systemResetCallback() {
+	FCB->handleSystemReset();
+}
 //END STATIC
 
 //Instance methods
+void FirmataCallbacks::begin(const char * boardID, int options) {
+	init(this, boardID, options);
+}
+
+
 void FirmataCallbacks::handleString(char *s) {
 	//NOT USED (yet)
 }
@@ -65,12 +74,6 @@ void FirmataCallbacks::handleString(char *s) {
 /*==============================================================================
 * SYSEX-BASED commands
 *============================================================================*/
-void FirmataCallbacks::processInput() {
-	while (Firmata.available()) {
-		Firmata.processInput();
-	}
-}
-
 void FirmataCallbacks::handleSysex(byte command, byte argc, byte *argv)
 {
 	byte mode;
@@ -294,17 +297,6 @@ void FirmataCallbacks::handleDigitalWrite(byte port, int value)
 	}
 }
 
-void FirmataCallbacks::outputPort(byte portNumber, byte portValue, byte forceSend)
-{
-	// pins not configured as INPUT are cleared to zeros
-	portValue = portValue & portConfigInputs[portNumber];
-	// only send if the value is different than previously sent
-	if (forceSend || previousPINs[portNumber] != portValue) {
-		Firmata.sendDigitalPort(portNumber, portValue);
-		previousPINs[portNumber] = portValue;
-	}
-}
-
 void FirmataCallbacks::handleReportAnalog(byte analogPin, int value)
 {
 	if (analogPin < TOTAL_ANALOG_PINS) {
@@ -343,6 +335,88 @@ void FirmataCallbacks::handleReportDigital(byte port, int value)
 	// pins configured as analog
 }
 
+void FirmataCallbacks::handleSystemReset()
+{
+	isResetting = true;
+
+	// initialize a defalt state
+	// TODO: option to load config from EEPROM instead of default
+
+/*#ifdef FIRMATA_SERIAL_FEATURE
+	serialFeature.reset();
+#endif
+
+	if (isI2CEnabled) {
+		disableI2CPins();
+	}*/
+
+	for (byte i = 0; i < TOTAL_PORTS; i++) {
+		reportPINs[i] = false;    // by default, reporting off
+		portConfigInputs[i] = 0;  // until activated
+		previousPINs[i] = 0;
+	}
+
+	for (byte i = 0; i < TOTAL_PINS; i++) {
+		// pins with analog capability default to analog input
+		// otherwise, pins default to digital output
+		if (IS_PIN_ANALOG(i)) {
+			// turns off pullup, configures everything
+			handleSetPinMode(i, PIN_MODE_ANALOG);
+		}
+		else if (IS_PIN_DIGITAL(i)) {
+			// sets the output to 0, configures portConfigInputs
+			handleSetPinMode(i, OUTPUT);
+		}
+
+		//servoPinMap[i] = 255;
+	}
+
+	// by default, do not report any analog inputs
+	analogInputsToReport = 0;
+
+	//detachedServoCount = 0;
+	//servoCount = 0;
+
+	/* send digital inputs to set the initial state on the host computer,
+	* since once in the loop(), this firmware will only send on change */
+	/*
+	TODO: this can never execute, since no pins default to digital input
+	but it will be needed when/if we support EEPROM stored config
+	for (byte i=0; i < TOTAL_PORTS; i++) {
+	outputPort(i, readPort(i, portConfigInputs[i]), true);
+	}
+	*/
+	isResetting = false;
+}
+
+
+/*
+* Non input driven functions
+*/
+
+void FirmataCallbacks::loop() {
+	checkDigitalInputs();
+	processSerialInput();
+	//analog stuff with sampling
+}
+
+void FirmataCallbacks::processSerialInput() {
+	while (Firmata.available()) {
+		Firmata.processInput();
+	}
+}
+
+void FirmataCallbacks::outputPort(byte portNumber, byte portValue, byte forceSend)
+{
+	// pins not configured as INPUT are cleared to zeros
+	portValue = portValue & portConfigInputs[portNumber];
+	// only send if the value is different than previously sent
+	if (forceSend || previousPINs[portNumber] != portValue) {
+		Firmata.sendDigitalPort(portNumber, portValue);
+		previousPINs[portNumber] = portValue;
+	}
+}
+
 void FirmataCallbacks::checkDigitalInputs(void)
 {
 	/* Using non-looping code allows constants to be given to readPort().
@@ -364,6 +438,16 @@ void FirmataCallbacks::checkDigitalInputs(void)
 	if (TOTAL_PORTS > 13 && reportPINs[13]) outputPort(13, readPort(13, portConfigInputs[13]), false);
 	if (TOTAL_PORTS > 14 && reportPINs[14]) outputPort(14, readPort(14, portConfigInputs[14]), false);
 	if (TOTAL_PORTS > 15 && reportPINs[15]) outputPort(15, readPort(15, portConfigInputs[15]), false);
+}
+
+bool FirmataCallbacks::elapsed(int interval) {
+	if (millisElapsed == -1 || millis() - millisElapsed > interval) {
+		millisElapsed = millis();
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 } //end namespace

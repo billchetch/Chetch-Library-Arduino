@@ -103,7 +103,7 @@ namespace Chetch{
 		maxValues = maxVals + 4; //add an extra 4 for the Type,Tag,Target,Command params
 		values = new char*[maxValues*2];
 	}
-        newID();
+    newID();
   };
 
   ADMMessage::~ADMMessage() {
@@ -117,7 +117,7 @@ namespace Chetch{
     
     if(maxValues > 0){
       for(int i = 0; i < 2*valuesCount; i++){
-	delete[] values[i];
+		delete[] values[i];
       }
       delete[] values;
     }
@@ -220,6 +220,18 @@ namespace Chetch{
     static char c[16];
     sprintf(c, "%lu", value);
     addValue(key, c, false);
+  }
+
+  void ADMMessage::addFloat(const char *key, float value, int precision, int width) {
+	static char c[16];
+	dtostrf(value, width, precision, c);
+	addValue(key, c, false);
+  }
+
+  void ADMMessage::addDouble(const char *key, double value, int precision, int width) {
+	  static char c[20];
+	  dtostrf(value, width, precision, c);
+	  addValue(key, c, false);
   }
 
   void ADMMessage::addBool(const char *key, bool value){

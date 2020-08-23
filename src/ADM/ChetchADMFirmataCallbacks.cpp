@@ -6,12 +6,14 @@
 //Uno specific code
 #define BOARD "UNO"
 #define LITTLE_ENDIAN true
-#define MAX_MESSAGE_SIZE 256
+#define MAX_MESSAGE_SIZE 128
+#define IR_TRANSMITTER_PIN 13
 #elif defined(ARDUINO_AVR_MEGA2560)
 //Mega 2560 specific code
 #define BOARD "MEGA2560"
 #define LITTLE_ENDIAN true
 #define MAX_MESSAGE_SIZE 512
+#define IR_TRANSMITTER_PIN 13
 #elif defined(ARDUINO_SAM_DUE)
 #define BOARD "SAM_DUE"
 #else
@@ -28,7 +30,7 @@ const char FREE_MEMORY_PARAM[] PROGMEM = "FM";
 const char DEVICE_COUNT_PARAM[] PROGMEM = "DC";
 const char DEVICE_TARGET_PARAM[] PROGMEM = "DT";
 const char DEVICE_CATEGORY_PARAM[] PROGMEM = "DG";
-const char DEVICE_ID_PARAM[] PROGMEM = "DTD";
+const char DEVICE_ID_PARAM[] PROGMEM = "DID"; 
 const char DEVICE_NAME_PARAM[] PROGMEM = "DN";
 const char MILLIS_PARAM[] PROGMEM = "MS";
 const char MAX_MESSAGE_SIZE_PARAM[] PROGMEM = "MM";
@@ -51,10 +53,10 @@ const char *const PARAMS_TABLE[] PROGMEM = {
 					DEVICE_COUNT_PARAM, 
 					DEVICE_TARGET_PARAM, 
 					DEVICE_CATEGORY_PARAM, 
-					DEVICE_ID_PARAM, 
+					DEVICE_ID_PARAM, //not used
 					DEVICE_NAME_PARAM,
 					MILLIS_PARAM,
-					MAX_MESSAGE_SIZE_PARAM	
+					MAX_MESSAGE_SIZE_PARAM
 					};
 
 const char *const MESSAGES_TABLE[] PROGMEM = {
@@ -69,6 +71,14 @@ const char *const MESSAGES_TABLE[] PROGMEM = {
 namespace Chetch{
 	ArduinoDeviceManager ADMFirmataCallbacks::ADM;
 
+	//Override this to perform initialisation based on computer-side connection to the board
+	//this is NOT the same as the board code constructing an instance (or calling begin) as these
+	//may already have happend then the computer disconnects and then connects again
+	void ADMFirmataCallbacks::initialise() {
+		ADM.initialise(this);
+		handleSystemReset();
+	}
+
 	void ADMFirmataCallbacks::sendMessage(ADMMessage *message) {
 		//IMPORTANT!!!: the serial connection can return messy data if this function is called too rapidly
 		//might be worth putting in a small 'delay' here... Having said that this problem has so far (5/5/20) only
@@ -78,7 +88,7 @@ namespace Chetch{
 		char *s = new char[MAX_MESSAGE_SIZE];
 		message->serialize(s);
 		Firmata.sendString(s);
-		delete s;
+		delete[] s;
 	}
 
 	void ADMFirmataCallbacks::respond(ADMMessage *message, ADMMessage *response) {
@@ -87,14 +97,19 @@ namespace Chetch{
 		sendMessage(response);
 	}
 
-	void ADMFirmataCallbacks::configureDevice(bool initial, ArduinoDevice *device, ADMMessage *message, ADMMessage *response) {
+	void ADMFirmataCallbacks::configure(ADMMessage *message, ADMMessage *response) {
 		//provides a hook to prepare before use
+	}
+
+	bool ADMFirmataCallbacks::handleCommand(ADMMessage *message, ADMMessage *response) {
+		//a hook.. return true to send response
+		return false;
 	}
 
 	void ADMFirmataCallbacks::handleMessage(ADMMessage *message) {
 		
 		ADMMessage *response = NULL;
-		char stBuffer[32];	//string table buffer				
+		char stBuffer[24];	//string table buffer				
 		
 		if (message == NULL) {
 			response = new ADMMessage(1);
@@ -110,10 +125,11 @@ namespace Chetch{
 	
 		switch (message->type) {
 			case ADMMessage::TYPE_INITIALISE:
-				ADM.initialise();
-				response = new ADMMessage(2);
-				response->type = ADMMessage::TYPE_INFO;
+				initialise();
+				response = new ADMMessage(4);
+				response->type = ADMMessage::TYPE_INITIALISE_RESPONSE;
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
+				response->addInt(Utils::getStringFromProgmem(stBuffer, 7, PARAMS_TABLE), ADM.getDeviceCount());
 				response->setValue(Utils::getStringFromProgmem(stBuffer, 0, MESSAGES_TABLE));
 				respond(message, response);
 				break;
@@ -143,8 +159,9 @@ namespace Chetch{
 					//values for device
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 8, PARAMS_TABLE), device->target);
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 9, PARAMS_TABLE), device->category);
-					response->addValue(Utils::getStringFromProgmem(stBuffer, 10, PARAMS_TABLE), device->id, false);
 					response->addValue(Utils::getStringFromProgmem(stBuffer, 11, PARAMS_TABLE), device->name, false);
+
+					device->handleStatusRequest(message, response);
 				}
 				else {
 					response = new ADMMessage(1);
@@ -158,26 +175,25 @@ namespace Chetch{
 
 			case ADMMessage::TYPE_CONFIGURE:
 				if (message->target == 0) { //configure board
-					response = new ADMMessage(1);
+					response = new ADMMessage(5);
 					response->setValue(Utils::getStringFromProgmem(stBuffer, 4, MESSAGES_TABLE));
+					configure(message, response);
 				} else { //configure device
 					bool initial = true;
 					if (device == NULL) { //this is a new device
-						response = new ADMMessage(2);
-						char deviceId[16];
-						char deviceName[32];
-						message->argumentAsCharArray(1, deviceId);
-						message->argumentAsCharArray(2, deviceName);
-						device = ADM.addDevice(message->target, message->argumentAsByte(0), deviceId, deviceName);
-						response->addValue("DID", device->id, false);
-						response->addValue("DN", device->name, false);
+						response = new ADMMessage(8);
+						char deviceName[DEVICE_NAME_LENGTH];
+						message->argumentAsCharArray(1, deviceName);
+						device = ADM.addDevice(message->target, message->argumentAsByte(0), deviceName);
+						response->addValue(Utils::getStringFromProgmem(stBuffer, 11, PARAMS_TABLE), device->name, false);
 					} else { //we already have a device added
-						response = new ADMMessage(1);
+						response = new ADMMessage(5);
 						initial = false;
 						response->setValue(Utils::getStringFromProgmem(stBuffer, 5, MESSAGES_TABLE));
 					}
-					configureDevice(initial, device, message, response);
+					device->configure(initial, message, response);
 				}
+				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
 				response->type = ADMMessage::TYPE_CONFIGURE_RESPONSE;
 				respond(message, response);
 				break;
@@ -186,8 +202,18 @@ namespace Chetch{
 				response = new ADMMessage(2);
 				response->type = ADMMessage::TYPE_PING_RESPONSE;
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
-				response->addInt(Utils::getStringFromProgmem(stBuffer, 12, PARAMS_TABLE), millis());
+				response->addLong(Utils::getStringFromProgmem(stBuffer, 12, PARAMS_TABLE), millis());
 				respond(message, response);
+				break;
+
+			case ADMMessage::TYPE_COMMAND:
+				response = new ADMMessage(8);
+				response->type = ADMMessage::TYPE_DATA;
+				if (message->target == 0) {
+					if(handleCommand(message, response))respond(message, response);
+				} else if(device != NULL) {
+					if(device->handleCommand(message, response))respond(message, response);
+				}
 				break;
 
 			default:
@@ -206,5 +232,11 @@ namespace Chetch{
 		handleMessage(message);
 		delete message;
  	}
+
+	void ADMFirmataCallbacks::loop() {
+		FirmataCallbacks::loop();
+	
+		ADM.loop();
+	}
 
 } //end namespace

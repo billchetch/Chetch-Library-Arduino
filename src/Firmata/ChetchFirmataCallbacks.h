@@ -1,3 +1,6 @@
+#ifndef CHETCH_FIRMATA_CALLBACKS_H
+#define CHETCH_FIRMATA_CALLBACKS_H
+
 #include <Arduino.h>
 #include <Firmata.h>
 
@@ -15,6 +18,7 @@ class FirmataCallbacks{
 		static void digitalWriteCallback(byte port, int value);
 		static void reportAnalogCallback(byte analogPin, int value);
 		static void reportDigitalCallback(byte port, int value);
+		static void systemResetCallback();
 
 		static FirmataCallbacks* FCB;
 
@@ -23,7 +27,7 @@ class FirmataCallbacks{
 		* instance props and methods
 		*/
 
-		char* boardID; //used to identify this board to other boards/controllers
+		const char* boardID; //used to identify this board to other boards/controllers
 
 		/* analog inputs */
 		int analogInputsToReport = 0;		// bitwise array to store pin reporting
@@ -39,8 +43,10 @@ class FirmataCallbacks{
 		unsigned long currentMillis;        // store the current value from millis()
 		unsigned long previousMillis;       // for comparison with currentMillis
 		unsigned int samplingInterval = 19; // how often to run the main loop (in ms)
+		long millisElapsed = -1;			// last time the 'elapsed' function return true
 
 		boolean isResetting = false;
+
 
 		virtual void handleString(char *s);
 		virtual void handleSysex(byte command, byte argc, byte *argv);
@@ -50,10 +56,15 @@ class FirmataCallbacks{
 		virtual void handleDigitalWrite(byte port, int value);
 		virtual void handleReportAnalog(byte analogPin, int value);
 		virtual void handleReportDigital(byte port, int value);
+		virtual void handleSystemReset();
 
-		void processInput();
+		virtual void begin(const char *boardID, int options = 0);
+		virtual void loop();
+		void processSerialInput();
 		void outputPort(byte portNumber, byte portValue, byte forceSend);
 		void checkDigitalInputs(void);
+		bool elapsed(int interval);
 };
 
 } //end namespace
+#endif

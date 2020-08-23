@@ -142,8 +142,8 @@ char *Utils::buildNameValueString(char *str, char *params[], int paramCount, con
 		}
 	}
 	if(encodeUrl){
-		delete buf1;
-		delete buf2;
+		delete[] buf1;
+		delete[] buf2;
 	}
 	return str;
 }
