@@ -40,18 +40,18 @@ namespace Chetch{
 
 	bool IRReceiver::handleCommand(ADMMessage *message, ADMMessage *response) {
 		char stBuffer[16];
-		switch (message->command) {
+		switch ((ADMMessage::CommandType)message->command) {
 			case ADMMessage::COMMAND_TYPE_START:
 				irReceiver->resume();
 				recording = true;
-				response->type = ADMMessage::TYPE_INFO;
+				response->type = (byte)ADMMessage::TYPE_INFO;
 				response->setValue(Utils::getStringFromProgmem(stBuffer, 0, MESSAGES_TABLE));
 				return true;
 
 			case ADMMessage::COMMAND_TYPE_STOP:
 				irReceiver->resume();
 				recording = false;
-				response->type = ADMMessage::TYPE_INFO;
+				response->type = (byte)ADMMessage::TYPE_INFO;
 				response->setValue(Utils::getStringFromProgmem(stBuffer, 1, MESSAGES_TABLE));
 				return true;
 
@@ -70,7 +70,7 @@ namespace Chetch{
 			
 			char stBuffer[8];
 			ADMMessage *message = new ADMMessage(4);
-			message->type = ADMMessage::TYPE_DATA;
+			message->type = (byte)ADMMessage::TYPE_DATA;
 			message->addLong(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), irReceiverResults.value); //Code
 			message->addByte(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), irReceiverResults.decode_type); //Protocol
 			message->addInt(Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), irReceiverResults.bits); //Bits

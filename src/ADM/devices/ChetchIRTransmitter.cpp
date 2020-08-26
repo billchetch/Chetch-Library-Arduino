@@ -21,7 +21,7 @@ namespace Chetch{
 	bool IRTransmitter::handleCommand(ADMMessage *message, ADMMessage *response) {
 		if (irSender == NULL)return false;
 
-		if(message->command == ADMMessage::COMMAND_TYPE_SEND){
+		if(message->command == (byte)ADMMessage::COMMAND_TYPE_SEND){
 			unsigned long ircommand = message->argumentAsULong(0);
 			int bits = message->argumentAsInt(1);
 			int protocol = message->argumentAsInt(2);

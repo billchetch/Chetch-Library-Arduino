@@ -113,7 +113,7 @@ namespace Chetch{
 		
 		if (message == NULL) {
 			response = new ADMMessage(1);
-			response->type = Chetch::ADMMessage::TYPE_ERROR;
+			response->type = (byte)Chetch::ADMMessage::TYPE_ERROR;
 			response->setValue(Utils::getStringFromProgmem(stBuffer, 3, PARAMS_TABLE));
 			sendMessage(response);
 			delete response;
@@ -123,11 +123,11 @@ namespace Chetch{
 		//we have a valid message to deal with
 		ArduinoDevice *device = message->target == 0 ? NULL : ADM.getDevice(message->target);
 	
-		switch (message->type) {
+		switch ((ADMMessage::MessageType)message->type) {
 			case ADMMessage::TYPE_INITIALISE:
 				initialise();
 				response = new ADMMessage(4);
-				response->type = ADMMessage::TYPE_INITIALISE_RESPONSE;
+				response->type = (byte)ADMMessage::TYPE_INITIALISE_RESPONSE;
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 7, PARAMS_TABLE), ADM.getDeviceCount());
 				response->setValue(Utils::getStringFromProgmem(stBuffer, 0, MESSAGES_TABLE));
@@ -137,7 +137,7 @@ namespace Chetch{
 			case ADMMessage::TYPE_STATUS_REQUEST:
 				if (message->target == 0) {
 					response = new ADMMessage(8);
-					response->type = ADMMessage::TYPE_STATUS_RESPONSE;
+					response->type = (byte)ADMMessage::TYPE_STATUS_RESPONSE;
 					
 					//General values for the board
 					response->addValue(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), BOARD, false);
@@ -154,7 +154,7 @@ namespace Chetch{
 				}
 				else if (device != NULL) {
 					response = new ADMMessage(4);
-					response->type = ADMMessage::TYPE_STATUS_RESPONSE;
+					response->type = (byte)ADMMessage::TYPE_STATUS_RESPONSE;
 					
 					//values for device
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 8, PARAMS_TABLE), device->target);
@@ -167,7 +167,7 @@ namespace Chetch{
 					response = new ADMMessage(1);
 
 					//error
-					response->type = Chetch::ADMMessage::TYPE_ERROR;
+					response->type = (byte)Chetch::ADMMessage::TYPE_ERROR;
 					response->setValue(Utils::getStringFromProgmem(stBuffer, 2, MESSAGES_TABLE));
 				}
 				respond(message, response);
@@ -194,13 +194,13 @@ namespace Chetch{
 					device->configure(initial, message, response);
 				}
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
-				response->type = ADMMessage::TYPE_CONFIGURE_RESPONSE;
+				response->type = (byte)ADMMessage::TYPE_CONFIGURE_RESPONSE;
 				respond(message, response);
 				break;
 
 			case ADMMessage::TYPE_PING:
 				response = new ADMMessage(2);
-				response->type = ADMMessage::TYPE_PING_RESPONSE;
+				response->type = (byte)ADMMessage::TYPE_PING_RESPONSE;
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
 				response->addLong(Utils::getStringFromProgmem(stBuffer, 12, PARAMS_TABLE), millis());
 				respond(message, response);
@@ -208,7 +208,7 @@ namespace Chetch{
 
 			case ADMMessage::TYPE_COMMAND:
 				response = new ADMMessage(8);
-				response->type = ADMMessage::TYPE_DATA;
+				response->type = (byte)ADMMessage::TYPE_DATA;
 				if (message->target == 0) {
 					if(handleCommand(message, response))respond(message, response);
 				} else if(device != NULL) {

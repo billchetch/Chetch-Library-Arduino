@@ -38,12 +38,12 @@ namespace Chetch{
 	}
 
 	bool DS18B20Array::handleCommand(ADMMessage *message, ADMMessage *response) {
-		switch (message->command) {
+		switch ((ADMMessage::CommandType)message->command) {
 			case ADMMessage::COMMAND_TYPE_READ:
 				if (numberOfTempSensors > 0) {
 					tempSensors->requestTemperatures();
 					DeviceAddress tempDeviceAddress;
-					response->type = ADMMessage::TYPE_DATA;
+					response->type = (byte)ADMMessage::TYPE_DATA;
 					response->target = target;
 					char stBuffer[16];
 					response->addInt(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), numberOfTempSensors);

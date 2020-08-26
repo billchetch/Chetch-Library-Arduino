@@ -26,7 +26,7 @@ namespace Chetch{
 
 	bool JSN_SR04T::handleCommand(ADMMessage *message, ADMMessage *response) {
 		long duration;
-		switch (message->command) {
+		switch ((ADMMessage::CommandType)message->command) {
 			case ADMMessage::COMMAND_TYPE_READ:
 				
 				for (int i = 0; i < 2; i++) {
@@ -42,7 +42,7 @@ namespace Chetch{
 					duration = pulseIn(_receivePin, HIGH);
 					if (duration > 0)break;
 				}
-				response->type = ADMMessage::TYPE_DATA;
+				response->type = (byte)ADMMessage::TYPE_DATA;
 				char stBuffer[16];
 				response->addLong(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), duration);
 				return true;

@@ -10,15 +10,18 @@ namespace Chetch{
   
   class ArduinoDevice{
     public:
-      static const byte CATEGORY_DIAGNOSTICS = 1;
-      static const byte CATEGORY_IR_TRANSMITTER = 2;
-      static const byte CATEGORY_IR_RECEIVER = 3;
-	  static const byte CATEGORY_TEMPERATURE_SENSOR = 4;
-	  static const byte CATEGORY_COUNTER = 5;
-	  static const byte CATEGORY_RANGE_FINDER = 6;
+      enum Category {
+		  DIAGNOSTICS = 1,
+		  IR_TRANSMITTER = 2,
+		  IR_RECEIVER = 3,
+		  TEMPERATURE_SENSOR = 4,
+		  COUNTER = 5,
+		  RANGE_FINDER = 6,
+		  ALARM = 7
+	  };
 
 	  byte target = 0;
-      byte category = 0;
+      byte category = 0; //we keep this a byte (rather than enum type) so as to make it fit easier with messaging
       char name[DEVICE_NAME_LENGTH];
 
 	  ArduinoDevice();

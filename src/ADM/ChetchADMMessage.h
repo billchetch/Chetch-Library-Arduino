@@ -6,34 +6,38 @@
 namespace Chetch{
   class ADMMessage{
     public:
-      static const byte TYPE_INFO = 3;
-      static const byte TYPE_WARNING = 4;
-      static const byte TYPE_ERROR = 5;
-      static const byte TYPE_PING = 6;
-      static const byte TYPE_PING_RESPONSE = 7;
-      static const byte TYPE_STATUS_REQUEST = 8;
-      static const byte TYPE_STATUS_RESPONSE = 9;
-      static const byte TYPE_COMMAND = 10;
-      static const byte TYPE_ERROR_TEST = 11;
-      static const byte TYPE_ECHO = 12;
-      static const byte TYPE_ECHO_RESPONSE = 13;
-      static const byte TYPE_CONFIGURE = 14;
-      static const byte TYPE_CONFIGURE_RESPONSE = 15;
-      static const byte TYPE_RESET = 16;
-      static const byte TYPE_INITIALISE = 17;
-      static const byte TYPE_DATA = 18; 
-      static const byte TYPE_INITIALISE_RESPONSE = 28;
+      enum MessageType {
+			TYPE_INFO = 3,
+			TYPE_WARNING,
+			TYPE_ERROR,
+			TYPE_PING,
+			TYPE_PING_RESPONSE,
+			TYPE_STATUS_REQUEST,
+			TYPE_STATUS_RESPONSE,
+			TYPE_COMMAND,
+			TYPE_ERROR_TEST,
+			TYPE_ECHO,
+			TYPE_ECHO_RESPONSE,
+			TYPE_CONFIGURE,
+			TYPE_CONFIGURE_RESPONSE,
+			TYPE_RESET,
+			TYPE_INITIALISE,
+			TYPE_DATA,
+			TYPE_INITIALISE_RESPONSE = 28
+	  };
 	  
-      static const byte COMMAND_TYPE_SEND = 1;
-      static const byte COMMAND_TYPE_RESET = 2;
-      static const byte COMMAND_TYPE_INITIALISE = 3;
-      static const byte COMMAND_TYPE_RECEIVE = 4;
-      static const byte COMMAND_TYPE_START = 5;
-      static const byte COMMAND_TYPE_STOP = 6;
-      static const byte COMMAND_TYPE_OPEN = 7;
-      static const byte COMMAND_TYPE_CLOSE = 8;
-      static const byte COMMAND_TYPE_SAVE = 10;
-      static const byte COMMAND_TYPE_READ = 11;
+      enum CommandType {
+			COMMAND_TYPE_SEND = 1,
+			COMMAND_TYPE_RESET,
+			COMMAND_TYPE_INITIALISE,
+			COMMAND_TYPE_RECEIVE,
+			COMMAND_TYPE_START,
+			COMMAND_TYPE_STOP,
+			COMMAND_TYPE_OPEN,
+			COMMAND_TYPE_CLOSE,
+			COMMAND_TYPE_SAVE,
+			COMMAND_TYPE_READ
+	  };
      
 
     private:

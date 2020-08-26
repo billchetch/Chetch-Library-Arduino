@@ -60,25 +60,24 @@ namespace Chetch{
         
 	ArduinoDevice *device = NULL;
 	char stBuffer[DEVICE_NAME_LENGTH];
-
-	switch (category) {
-	case ArduinoDevice::CATEGORY_TEMPERATURE_SENSOR:
+	switch ((ArduinoDevice::Category)category) {
+	case ArduinoDevice::TEMPERATURE_SENSOR:
 		if (strcmp(dname, Utils::getStringFromProgmem(stBuffer, 0, DEVICES_TABLE)) == 0) {
 			device = new DS18B20Array(target, category, dname);
 		} 
 		break;
 
-	case ArduinoDevice::CATEGORY_RANGE_FINDER:
+	case ArduinoDevice::RANGE_FINDER:
 		if (strcmp(dname, Utils::getStringFromProgmem(stBuffer, 1, DEVICES_TABLE)) == 0) {
 			device = new JSN_SR04T(target, category, dname);
 		}
 		break;
 
-	case ArduinoDevice::CATEGORY_IR_RECEIVER:
+	case ArduinoDevice::IR_RECEIVER:
 		device = new IRReceiver(target, category, dname);
 		break;
 
-	case ArduinoDevice::CATEGORY_IR_TRANSMITTER:
+	case ArduinoDevice::IR_TRANSMITTER:
 		device = new IRTransmitter(target, category, dname);
 		break;
 
