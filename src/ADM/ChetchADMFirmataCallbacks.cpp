@@ -94,6 +94,7 @@ namespace Chetch{
 	void ADMFirmataCallbacks::respond(ADMMessage *message, ADMMessage *response) {
 		//this provides a hook to allow modification of response
 		response->target = message->target;
+		response->tag = message->tag;
 		sendMessage(response);
 	}
 
@@ -208,7 +209,7 @@ namespace Chetch{
 
 			case ADMMessage::TYPE_COMMAND:
 				response = new ADMMessage(8);
-				response->type = (byte)ADMMessage::TYPE_DATA;
+				response->type = (byte)ADMMessage::TYPE_COMMAND_RESPONSE;
 				if (message->target == 0) {
 					if(handleCommand(message, response))respond(message, response);
 				} else if(device != NULL) {

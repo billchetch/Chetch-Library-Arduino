@@ -30,8 +30,14 @@ namespace Chetch{
   }
 
   bool ArduinoDevice::handleCommand(ADMMessage *message, ADMMessage *response) {
-	  //A hook... return true to send response, false to cancel send
-	  return false;
+	  //Return true to send response, false to cancel send (unless specified message type for response is DATA)
+	  switch ((ADMMessage::CommandType)message->command) {
+		  case ADMMessage::COMMAND_TYPE_TEST:
+			  return true;
+	  
+		  default:
+			  return false;
+	  }
   }
 
   ADMMessage* ArduinoDevice::loop() {
