@@ -158,4 +158,13 @@ char *Utils::getStringFromProgmem(char *buffer, byte idx, const char* const stri
 	return buffer; 
 }
 
+unsigned int Utils::getUIntArrayFromProgmem(unsigned int *buffer, byte idx, const unsigned int* const intArrayTable[], const unsigned int intArrayLengths[]){
+  unsigned int n = (unsigned int)pgm_read_word(&(intArrayLengths[idx]));
+  for(unsigned int i = 0; i < n; i++){
+    unsigned int value = (unsigned int)pgm_read_word(&(intArrayTable[idx][i]));
+    buffer[i] = value;
+  }
+  return n;
+}
+
 } //end namespace
