@@ -25,7 +25,7 @@ const char MAX_DEVICES_PARAM[] PROGMEM = "MD";
 const char BOARD_ID_PARAM[] PROGMEM = "BDID";
 const char LITTLE_ENDIAN_PARAM[] PROGMEM = "LE";
 const char LEDBI_PARAM[] PROGMEM = "LEDBI";
-const char CALLBACK_COUNT_PARAM[] PROGMEM = "CC";
+const char LOOP_MILLS_PARAM[] PROGMEM = "LC";
 const char FREE_MEMORY_PARAM[] PROGMEM = "FM";
 const char DEVICE_COUNT_PARAM[] PROGMEM = "DC";
 const char DEVICE_TARGET_PARAM[] PROGMEM = "DT";
@@ -48,7 +48,7 @@ const char *const PARAMS_TABLE[] PROGMEM = {
 					BOARD_ID_PARAM, 	
 					LITTLE_ENDIAN_PARAM, 
 					LEDBI_PARAM,
-					CALLBACK_COUNT_PARAM,  	//not used
+					LOOP_MILLS_PARAM,  	//not used
 					FREE_MEMORY_PARAM, 
 					DEVICE_COUNT_PARAM, 
 					DEVICE_TARGET_PARAM, 

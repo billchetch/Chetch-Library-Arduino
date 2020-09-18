@@ -42,6 +42,7 @@ namespace Chetch{
 		char stBuffer[16];
 		switch ((ADMMessage::CommandType)message->command) {
 			case ADMMessage::COMMAND_TYPE_START:
+				irReceiver->enableIRIn();
 				irReceiver->resume();
 				recording = true;
 				response->type = (byte)ADMMessage::TYPE_INFO;
