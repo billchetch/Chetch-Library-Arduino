@@ -20,7 +20,7 @@ class Utils{
     static char *buildQueryString(char *str, char *params[], int paramCount, boolean encodeUrl = true);
 	
     static char *getStringFromProgmem(char *buffer, byte idx, const char* const stringTable[]);
-	static unsigned int getUIntArrayFromProgmem(unsigned int *buffer, byte idx, const unsigned int* const intArrayTable[], const unsigned int intArrayLengths[]);
+    static unsigned int getUIntArrayFromProgmem(unsigned int *buffer, byte idx, const unsigned int* const intArrayTable[], const unsigned int intArrayLengths[]);
 };
 
 } //end namespace

@@ -18,6 +18,7 @@ namespace Chetch{
 
 	IRTransmitter::~IRTransmitter(){
 		if(irSender != NULL)delete irSender;
+		if(repeatCommand != NULL)delete[] repeatCommand;
 	}
 
 	void IRTransmitter::configure(bool initial, ADMMessage *message, ADMMessage *response) {
@@ -25,13 +26,26 @@ namespace Chetch{
 
 		irSender = new IRsend();
 		response->addInt("TP", SEND_PIN); //defined by the IRremote library
+
+		//this is the repeat command
+		int commandIdx = message->argumentAsInt(2);
+		if (commandIdx >= 0) {
+			unsigned int raw[8];
+			switch (commandIdx) { //we have to hard code the indices as the data is taken from progmem
+				case 0:
+					repeatLength = Utils::getUIntArrayFromProgmem(raw, 0, IR_RAW_CODES, IR_RAW_CODE_LENGTHS); break;
+				case 1:
+					repeatLength = Utils::getUIntArrayFromProgmem(raw, 1, IR_RAW_CODES, IR_RAW_CODE_LENGTHS); break;
+			}
+			repeatCommand = new unsigned int[repeatLength];
+			for (int i = 0; i < repeatLength; i++) {
+				repeatCommand[i] = raw[i];
+			}
+		}
 	}
 
 	bool IRTransmitter::handleCommand(ADMMessage *message, ADMMessage *response) {
 		if (irSender == NULL)return false;
-
-		unsigned int n;
-		unsigned int raw[8];
 
 		if(message->command == (byte)ADMMessage::COMMAND_TYPE_SEND){
 			unsigned long ircommand = message->argumentAsULong(0);
@@ -50,8 +64,10 @@ namespace Chetch{
 					break;
 
 				case UNKNOWN: //we send as raw
-					n = Utils::getUIntArrayFromProgmem(raw, (int)ircommand, IR_RAW_CODES, IR_RAW_CODE_LENGTHS);
-					irSender->sendRaw(raw, n, 38);
+					//for (int i = 0; i < 50; i++) {
+						irSender->sendRaw(repeatCommand, repeatLength, 38);
+						//delay(50);
+					//}
 					break;
 
 				default:
