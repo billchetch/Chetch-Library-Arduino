@@ -53,27 +53,26 @@ namespace Chetch{
 			int protocol = message->argumentAsInt(2);
 
 			switch (protocol) {
-				case SAMSUNG: //7
-					irSender->sendSAMSUNG(ircommand, bits);
-					break;
-				case LG: //10
-					irSender->sendLG(ircommand, bits);
-					break;
-				case NEC: //3
-					irSender->sendNEC(ircommand, bits);
-					break;
+			case SAMSUNG: //7
+				irSender->sendSAMSUNG(ircommand, bits);
+				break;
+			case LG: //10
+				irSender->sendLG(ircommand, bits);
+				break;
+			case NEC: //3
+				irSender->sendNEC(ircommand, bits);
+				break;
 
-				case UNKNOWN: //we send as raw
-					//for (int i = 0; i < 50; i++) {
-						irSender->sendRaw(repeatCommand, repeatLength, 38);
-						//delay(50);
-					//}
-					break;
-
+			case UNKNOWN: //we send as raw
+				switch ((int)ircommand) {
+				case 0:
+					irSender->sendRaw(repeatCommand, repeatLength, 38); break;
 				default:
 					break;
-			}
-		} 
+				}
+				break;
+			} //end protocol switch
+		} //end command type conditional
 
 		return false;
 	}
