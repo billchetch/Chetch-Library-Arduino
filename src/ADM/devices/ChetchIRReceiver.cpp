@@ -66,13 +66,12 @@ namespace Chetch{
 		static unsigned long elapsed = 0;
 		if ((millis() - elapsed > 100) && irReceiver->decode(&irReceiverResults)) {
 			elapsed = millis();
-			if (irReceiverResults.decode_type == 255)return NULL;
 			
 			char stBuffer[8];
 			ADMMessage *message = new ADMMessage(4);
 			message->type = (byte)ADMMessage::TYPE_DATA;
 			message->addLong(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), irReceiverResults.value); //Code
-			message->addByte(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), irReceiverResults.decode_type); //Protocol
+			message->addInt(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), irReceiverResults.decode_type); //Protocol
 			message->addInt(Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), irReceiverResults.bits); //Bits
 
 			irReceiver->resume(); //ready for next result
