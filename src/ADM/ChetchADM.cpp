@@ -4,6 +4,7 @@
 #include "devices/ChetchJSN_SR04T.h"
 #include "devices/ChetchIRReceiver.h"
 #include "devices/ChetchIRTransmitter.h"
+#include "devices/ChetchCounter.h"
 
 const char DS18B20[] PROGMEM = "DS18B20";
 const char JSN_SR04T[] PROGMEM = "JSN-SR04T";
@@ -79,6 +80,10 @@ namespace Chetch{
 
 	case ArduinoDevice::IR_TRANSMITTER:
 		device = new IRTransmitter(target, category, dname);
+		break;
+
+	case ArduinoDevice::COUNTER:
+		device = new Counter(target, category, dname);
 		break;
 
 	default:
