@@ -1,5 +1,7 @@
 #include "ChetchFirmataCallbacks.h"
 
+#define MINIMUM_SAMPLING_INTERVAL   1
+
 namespace Chetch{
 
 FirmataCallbacks *FirmataCallbacks::FCB = NULL;
@@ -144,14 +146,14 @@ void FirmataCallbacks::handleSysex(byte command, byte argc, byte *argv)
 		break;
 
 	case SAMPLING_INTERVAL:
-		/*if (argc > 1) {
-		samplingInterval = argv[0] + (argv[1] << 7);
-		if (samplingInterval < MINIMUM_SAMPLING_INTERVAL) {
-		samplingInterval = MINIMUM_SAMPLING_INTERVAL;
-		}
+		if (argc > 1) {
+			samplingInterval = argv[0] + (argv[1] << 7);
+			if (samplingInterval < MINIMUM_SAMPLING_INTERVAL) {
+				samplingInterval = MINIMUM_SAMPLING_INTERVAL;
+			}
 		} else {
 		//Firmata.sendString("Not enough data");
-		}*/
+		}
 		break;
 
 	case SERIAL_MESSAGE:
@@ -397,7 +399,28 @@ void FirmataCallbacks::handleSystemReset()
 void FirmataCallbacks::loop() {
 	checkDigitalInputs();
 	processSerialInput();
+
 	//analog stuff with sampling
+	byte pin, analogPin;
+	currentMillis = millis();
+	if (currentMillis - previousMillis > samplingInterval) {
+		previousMillis += samplingInterval;
+		/* ANALOGREAD - do all analogReads() at the configured sampling interval */
+		for (pin = 0; pin < TOTAL_PINS; pin++) {
+			if (IS_PIN_ANALOG(pin) && Firmata.getPinMode(pin) == PIN_MODE_ANALOG) {
+				analogPin = PIN_TO_ANALOG(pin);
+				if (analogInputsToReport & (1 << analogPin)) {
+					Firmata.sendAnalog(analogPin, analogRead(analogPin));
+				}
+			}
+		}
+		// report i2c data for all device with read continuous mode enabled
+		/*if (queryIndex > -1) {
+			for (byte i = 0; i < queryIndex + 1; i++) {
+				readAndReportData(query[i].addr, query[i].reg, query[i].bytes, query[i].stopTX);
+			}
+		}*/
+	}
 }
 
 void FirmataCallbacks::processSerialInput() {
