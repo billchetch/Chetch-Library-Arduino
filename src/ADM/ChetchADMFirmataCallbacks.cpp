@@ -235,9 +235,19 @@ namespace Chetch{
  	}
 
 	void ADMFirmataCallbacks::loop() {
+		if(elapsed(5000)){
+			heartbeat();
+		}
+
 		FirmataCallbacks::loop();
 	
 		ADM.loop();
 	}
 
+
+	void heartbeat(){
+		digitalWrite(LED_BUILTIN, HIGH);
+		delay(5);
+		digitalWrite(LED_BUILTIN, LOW);
+	}
 } //end namespace

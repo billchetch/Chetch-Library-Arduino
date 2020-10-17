@@ -22,6 +22,7 @@ namespace Chetch{
 			virtual void handleString(char *s);
 			virtual bool handleCommand(ADMMessage *message, ADMMessage *response);
 			virtual void loop();
+			void heartbeat();
   };
 } //end namespace	
 #endif
