@@ -245,7 +245,7 @@ namespace Chetch{
 	}
 
 
-	void heartbeat(){
+	void ADMFirmataCallbacks::heartbeat(){
 		digitalWrite(LED_BUILTIN, HIGH);
 		delay(5);
 		digitalWrite(LED_BUILTIN, LOW);
