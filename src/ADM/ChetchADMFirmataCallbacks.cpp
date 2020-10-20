@@ -247,6 +247,12 @@ namespace Chetch{
 
 	void ADMFirmataCallbacks::heartbeat(){
 		digitalWrite(LED_BUILTIN, HIGH);
+		
+		/*ADMMessage *message = new ADMMessage();
+		message->type = ADMMessage::TYPE_PING;
+		sendMessage(message);
+		delete message;*/
+
 		delay(5);
 		digitalWrite(LED_BUILTIN, LOW);
 	}
