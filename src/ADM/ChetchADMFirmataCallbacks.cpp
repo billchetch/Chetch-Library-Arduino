@@ -25,7 +25,7 @@ const char MAX_DEVICES_PARAM[] PROGMEM = "MD";
 const char BOARD_ID_PARAM[] PROGMEM = "BDID";
 const char LITTLE_ENDIAN_PARAM[] PROGMEM = "LE";
 const char LEDBI_PARAM[] PROGMEM = "LEDBI";
-const char LOOP_MILLS_PARAM[] PROGMEM = "LC";
+const char ADM_INITIALISED_PARAM[] PROGMEM = "AI";
 const char FREE_MEMORY_PARAM[] PROGMEM = "FM";
 const char DEVICE_COUNT_PARAM[] PROGMEM = "DC";
 const char DEVICE_TARGET_PARAM[] PROGMEM = "DT";
@@ -48,7 +48,7 @@ const char *const PARAMS_TABLE[] PROGMEM = {
 					BOARD_ID_PARAM, 	
 					LITTLE_ENDIAN_PARAM, 
 					LEDBI_PARAM,
-					LOOP_MILLS_PARAM,  	//not used
+					ADM_INITIALISED_PARAM,  	
 					FREE_MEMORY_PARAM, 
 					DEVICE_COUNT_PARAM, 
 					DEVICE_TARGET_PARAM, 
@@ -145,6 +145,7 @@ namespace Chetch{
 					if(this->boardID != NULL){
 						response->addValue(Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), this->boardID, true);
 					}
+					response->addBool(Utils::getStringFromProgmem(stBuffer, 5, PARAMS_TABLE), ADM.isInitialised());
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), MAX_DEVICES);
 					response->addBool(Utils::getStringFromProgmem(stBuffer, 3, PARAMS_TABLE), LITTLE_ENDIAN);
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 4, PARAMS_TABLE), LED_BUILTIN);
@@ -200,8 +201,9 @@ namespace Chetch{
 				break;
 
 			case ADMMessage::TYPE_PING:
-				response = new ADMMessage(2);
+				response = new ADMMessage(3);
 				response->type = (byte)ADMMessage::TYPE_PING_RESPONSE;
+				response->addBool(Utils::getStringFromProgmem(stBuffer, 5, PARAMS_TABLE), ADM.isInitialised());
 				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
 				response->addLong(Utils::getStringFromProgmem(stBuffer, 12, PARAMS_TABLE), millis());
 				respond(message, response);

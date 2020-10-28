@@ -34,6 +34,10 @@ namespace Chetch{
 	firmataCallbacks = fcb;
   }
 
+  bool ArduinoDeviceManager::isInitialised(){
+		return initialised;
+  }
+
   void ArduinoDeviceManager::reset(){
     initialise(firmataCallbacks);
   }

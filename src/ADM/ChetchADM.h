@@ -33,6 +33,7 @@ namespace Chetch{
 
 	  int getDeviceCount();
 	  void initialise(ADMFirmataCallbacks* fcb); //should be when ADM on computer connects
+	  bool isInitialised();
       void reset();
       
 	  ArduinoDevice *getDevice(byte target);
