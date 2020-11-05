@@ -2,19 +2,29 @@
 #include "ChetchADMMessage.h"
 
 namespace Chetch{
+
+   ADMMessage::ErrorCode ADMMessage::error = ADMMessage::NO_ERROR;
+
   /*
    * Assumes that incoming data is a byte array message
    */
   ADMMessage *ADMMessage::deserialize(char *s){
-    int byteCount = strlen(s);
+
+    ADMMessage::error = ADMMessage::NO_ERROR;
+
+    int byteCount = strlen(s) - 1;
+    
     if(byteCount < 4){
+      ADMMessage::error = ADMMessage::ERROR_BADLY_FORMED;
       return NULL;
     }
 
     //put bytes in to an array and replace any 'zero byte' bytes with literal 0
     //count the number of arguments as well
     byte *bytes = new byte[byteCount];
+    byte checkbyte = (byte)s[byteCount];
     bytes[0] = (byte)s[0]; //this is the 'zero byte mask' the value we use to encode 0 (because 0 byte will be interpreted as end of string)
+    byte checksum = 0;
     int argCount = 0;
     int argByteCountIdx = 5; //the byte index at which to find arguments
     for(int i = 1; i < byteCount; i++){
@@ -25,8 +35,16 @@ namespace Chetch{
         argCount++;
         argByteCountIdx += bytes[i] + 1;
       }
+      checksum += b;
     }    
     
+    //check sum error
+    if(checksum != checkbyte){
+        ADMMessage::error = ADMMessage::ERROR_CHECKSUM;
+        return NULL;
+    }
+
+
     ADMMessage *message = new ADMMessage(bytes, byteCount, argCount);
     delete[] bytes;
     

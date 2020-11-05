@@ -41,6 +41,14 @@ namespace Chetch{
 			COMMAND_TYPE_READ,
 			COMMAND_TYPE_TEST
 	  };
+
+      enum ErrorCode {
+            NO_ERROR = 0,
+            ERROR_CHECKSUM = 1,
+            ERROR_UNRECOGNISED_MESSAGE_TYPE = 2,
+            ERROR_BADLY_FORMED = 3,
+            ERROR_UNKNOWN = 4
+      };
      
 
     private:
@@ -58,6 +66,8 @@ namespace Chetch{
       int valuesCount = 0;
     
     public:  
+      static ErrorCode error;
+
       unsigned long id = 0; 
       byte type = 0; //should take messsage type value
       byte tag = 0; //tagging data sent from computer ... can be re-used to send back to make comms linked

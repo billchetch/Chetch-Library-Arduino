@@ -1,9 +1,9 @@
 #include "ChetchUtils.h"
 #include "ChetchDS18B20Array.h"
 
-const char SENSOR_COUNT[] PROGMEM = "SensorCount";
-const char ONE_WIRE_PIN[] PROGMEM = "OneWirePin";
-const char TEMPERATURE[] PROGMEM = "Temperature";
+const char SENSOR_COUNT[] PROGMEM = "SC";
+const char ONE_WIRE_PIN[] PROGMEM = "OP";
+const char TEMPERATURE[] PROGMEM = "TP";
 
 const char *const PARAMS_TABLE[] PROGMEM = {
 	SENSOR_COUNT,
@@ -31,7 +31,7 @@ namespace Chetch{
 			tempSensors = new DallasTemperature(oneWire);
 			tempSensors->begin();
 			numberOfTempSensors = tempSensors->getDeviceCount();
-			char stBuffer[16];
+			char stBuffer[3];
 			response->addInt(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), numberOfTempSensors);
 			response->addInt(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), owPin);
 		}
@@ -45,9 +45,9 @@ namespace Chetch{
 					DeviceAddress tempDeviceAddress;
 					response->type = (byte)ADMMessage::TYPE_DATA;
 					response->target = target;
-					char stBuffer[16];
+					char stBuffer[3];
 					response->addInt(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), numberOfTempSensors);
-					char tempKey[16];
+					char tempKey[6]; //note that this limits the max number of sensors to 100!
 					for (int i = 0; i < numberOfTempSensors; i++) {
 						tempSensors->getAddress(tempDeviceAddress, i);
 						float celsius = tempSensors->getTempC(tempDeviceAddress);

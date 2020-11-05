@@ -34,13 +34,14 @@ const char DEVICE_ID_PARAM[] PROGMEM = "DID";
 const char DEVICE_NAME_PARAM[] PROGMEM = "DN";
 const char MILLIS_PARAM[] PROGMEM = "MS";
 const char MAX_MESSAGE_SIZE_PARAM[] PROGMEM = "MM";
+const char ERROR_CODE_PARAM[] PROGMEM = "EC";
 
-const char ADM_INITIALISED_MESSAGE[] PROGMEM = "ADM Initialised";
+const char ADM_INITIALISED_MESSAGE[] PROGMEM = "Initialised";
 const char STATUS_OK_MESSAGE[] PROGMEM = "Status OK";
 const char NO_DEVICE_MESSAGE[] PROGMEM = "No device";
 const char PARSE_ERROR_MESSAGE[] PROGMEM = "Parse error";
-const char BOARD_CONFIGURED_MESSAGE[] PROGMEM = "Board configured";
-const char DEVICE_ALREADY_ADDED_MESSAGE[] PROGMEM = "Device already added"; 
+const char BOARD_CONFIGURED_MESSAGE[] PROGMEM = "Configured";
+const char DEVICE_ALREADY_ADDED_MESSAGE[] PROGMEM = "Already added"; 
 
 const char *const PARAMS_TABLE[] PROGMEM = {
 					BOARD_PARAM, 
@@ -56,7 +57,8 @@ const char *const PARAMS_TABLE[] PROGMEM = {
 					DEVICE_ID_PARAM, //not used
 					DEVICE_NAME_PARAM,
 					MILLIS_PARAM,
-					MAX_MESSAGE_SIZE_PARAM
+					MAX_MESSAGE_SIZE_PARAM,
+					ERROR_CODE_PARAM
 					};
 
 const char *const MESSAGES_TABLE[] PROGMEM = {
@@ -95,6 +97,10 @@ namespace Chetch{
 		//this provides a hook to allow modification of response
 		response->target = message->target;
 		response->tag = message->tag;
+		if(this->boardID != NULL){
+			char stBuffer[5];
+			response->addValue(Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), this->boardID, true);
+		}
 		sendMessage(response);
 	}
 
@@ -110,11 +116,12 @@ namespace Chetch{
 	void ADMFirmataCallbacks::handleMessage(ADMMessage *message) {
 		
 		ADMMessage *response = NULL;
-		char stBuffer[24];	//string table buffer				
+		char stBuffer[18];	//string table buffer				
 		
 		if (message == NULL) {
-			response = new ADMMessage(1);
+			response = new ADMMessage(2);
 			response->type = (byte)Chetch::ADMMessage::TYPE_ERROR;
+			response->addInt(Utils::getStringFromProgmem(stBuffer, 14, PARAMS_TABLE), ADMMessage::error); 
 			response->setValue(Utils::getStringFromProgmem(stBuffer, 3, PARAMS_TABLE));
 			sendMessage(response);
 			delete response;
@@ -142,9 +149,6 @@ namespace Chetch{
 					
 					//General values for the board
 					response->addValue(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), BOARD, false);
-					if(this->boardID != NULL){
-						response->addValue(Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), this->boardID, true);
-					}
 					response->addBool(Utils::getStringFromProgmem(stBuffer, 5, PARAMS_TABLE), ADM.isInitialised());
 					response->addByte(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), MAX_DEVICES);
 					response->addBool(Utils::getStringFromProgmem(stBuffer, 3, PARAMS_TABLE), LITTLE_ENDIAN);
@@ -213,14 +217,20 @@ namespace Chetch{
 				response = new ADMMessage(8);
 				response->type = (byte)ADMMessage::TYPE_COMMAND_RESPONSE;
 				if (message->target == 0) {
-					if(handleCommand(message, response))respond(message, response);
+					handleCommand(message, response);
 				} else if(device != NULL) {
-					if(device->handleCommand(message, response))respond(message, response);
+					device->handleCommand(message, response);
 				}
+				respond(message, response);
 				break;
 
 			default:
-				//do nothing as it can drop through to be handled by derived classes 
+				response = new ADMMessage(2);
+
+				//error
+				response->type = (byte)Chetch::ADMMessage::TYPE_ERROR;
+				response->addInt(Utils::getStringFromProgmem(stBuffer, 14, PARAMS_TABLE), ADMMessage::ERROR_UNRECOGNISED_MESSAGE_TYPE);
+				response->addInt("MT", message->type);
 				break;
 		}
 		if(response != NULL){
@@ -248,14 +258,18 @@ namespace Chetch{
 
 
 	void ADMFirmataCallbacks::heartbeat(){
-		digitalWrite(LED_BUILTIN, HIGH);
-		
-		/*ADMMessage *message = new ADMMessage();
-		message->type = ADMMessage::TYPE_PING;
-		sendMessage(message);
-		delete message;*/
-
-		delay(5);
-		digitalWrite(LED_BUILTIN, LOW);
+		if(ADM.isInitialised()){
+			digitalWrite(LED_BUILTIN, HIGH);
+			delay(5);
+			digitalWrite(LED_BUILTIN, LOW);
+		} else {
+			digitalWrite(LED_BUILTIN, HIGH);
+			delay(250);
+			digitalWrite(LED_BUILTIN, LOW);
+			delay(150);
+			digitalWrite(LED_BUILTIN, HIGH);
+			delay(250);
+			digitalWrite(LED_BUILTIN, LOW);
+		}
 	}
 } //end namespace

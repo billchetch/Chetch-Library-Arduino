@@ -129,7 +129,7 @@ void FirmataCallbacks::handleSysex(byte command, byte argc, byte *argv)
 			Firmata.write(pin);
 			if (pin < TOTAL_PINS) {
 				Firmata.write(Firmata.getPinMode(pin));
-				Firmata.write((byte)Firmata.getPinState(pin) & 0x7F);
+				Firmata.write((byte)1); //Firmata.getPinState(pin) & 0x7F);
 				if (Firmata.getPinState(pin) & 0xFF80) Firmata.write((byte)(Firmata.getPinState(pin) >> 7) & 0x7F);
 				if (Firmata.getPinState(pin) & 0xC000) Firmata.write((byte)(Firmata.getPinState(pin) >> 14) & 0x7F);
 			}

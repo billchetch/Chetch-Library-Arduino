@@ -1,8 +1,8 @@
 #include "ChetchUtils.h"
 #include "ChetchCounter.h"
 
-const char COUNT[] PROGMEM = "Count";
-const char INTERVAL[] PROGMEM = "Interval";
+const char COUNT[] PROGMEM = "CT"; //Count
+const char INTERVAL[] PROGMEM = "IV"; //Interval
 
 const char *const PARAMS_TABLE[] PROGMEM = {
 	COUNT,
@@ -35,7 +35,7 @@ namespace Chetch{
 		switch ((ADMMessage::CommandType)message->command) {
 			case ADMMessage::COMMAND_TYPE_READ:
 				interval = millis() - _lastRead;
-				char stBuffer[16];
+				char stBuffer[3];
 				response->addLong(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), _counter);
 				response->addLong(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), interval);
 				_lastRead = millis();
