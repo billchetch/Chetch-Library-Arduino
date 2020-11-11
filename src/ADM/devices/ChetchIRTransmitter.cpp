@@ -25,7 +25,7 @@ namespace Chetch{
 		ArduinoDevice::configure(initial, message, response);
 
 		irSender = new IRsend();
-		response->addInt("TP", SEND_PIN); //defined by the IRremote library
+		response->addInt(SEND_PIN); //defined by the IRremote library
 
 		//this is the repeat command
 		int commandIdx = message->argumentAsInt(2);

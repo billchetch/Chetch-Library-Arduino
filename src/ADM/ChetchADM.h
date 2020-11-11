@@ -17,6 +17,13 @@
 #error Unsupported hardware
 #endif
 
+#define TEMPERATURE_DEVICES 1
+#define RANGE_FINDER_DEVICES 2
+#define IR_DEVICES 4
+
+#define INCLUDE_DEVICES TEMPERATURE_DEVICES
+
+
 namespace Chetch{
   class ADMFirmataCallbacks;
 

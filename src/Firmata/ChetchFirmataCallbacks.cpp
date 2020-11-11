@@ -5,7 +5,7 @@
 namespace Chetch{
 
 FirmataCallbacks *FirmataCallbacks::FCB = NULL;
-void FirmataCallbacks::init(FirmataCallbacks* fcb, const char* boardID, int options) {
+void FirmataCallbacks::init(FirmataCallbacks* fcb, byte boardID, long baudRate, int options) {
 
 	if (FirmataCallbacks::FCB == NULL) {
 		fcb->boardID = boardID;
@@ -22,7 +22,10 @@ void FirmataCallbacks::init(FirmataCallbacks* fcb, const char* boardID, int opti
 		Firmata.attach(REPORT_DIGITAL, FirmataCallbacks::reportDigitalCallback);
 		Firmata.attach(SYSTEM_RESET, FirmataCallbacks::systemResetCallback);
 		
-		Firmata.begin(57600);
+		Serial.begin(baudRate);
+		fcb->FirmataStream = &Serial;
+		Firmata.begin(Serial);
+		//Firmata.begin(baudRate);
 	}
 }
 
@@ -64,8 +67,8 @@ void FirmataCallbacks::systemResetCallback() {
 //END STATIC
 
 //Instance methods
-void FirmataCallbacks::begin(const char * boardID, int options) {
-	init(this, boardID, options);
+void FirmataCallbacks::begin(byte boardID, long baudRate, int options) {
+	init(this, boardID, baudRate, options);
 }
 
 
@@ -147,9 +150,9 @@ void FirmataCallbacks::handleSysex(byte command, byte argc, byte *argv)
 
 	case SAMPLING_INTERVAL:
 		if (argc > 1) {
-			samplingInterval = argv[0] + (argv[1] << 7);
-			if (samplingInterval < MINIMUM_SAMPLING_INTERVAL) {
-				samplingInterval = MINIMUM_SAMPLING_INTERVAL;
+			analogSamplingInterval = argv[0] + (argv[1] << 7);
+			if (analogSamplingInterval < MINIMUM_SAMPLING_INTERVAL) {
+				analogSamplingInterval = MINIMUM_SAMPLING_INTERVAL;
 			}
 		} else {
 		//Firmata.sendString("Not enough data");
@@ -236,7 +239,8 @@ void FirmataCallbacks::handleSetPinMode(byte pin, int mode) {
 #endif
 		break;
 	default:
-		Firmata.sendString("Unknown pin mode"); // TODO: put error msgs in EEPROM
+		//Firmata.sendString("Unknown pin mode"); // TODO: put error msgs in EEPROM
+		break;
 	}
 }
 
@@ -397,29 +401,34 @@ void FirmataCallbacks::handleSystemReset()
 */
 
 void FirmataCallbacks::loop() {
-	checkDigitalInputs();
+	currentMillis = millis();
+	
 	processSerialInput();
 
-	//analog stuff with sampling
-	byte pin, analogPin;
-	currentMillis = millis();
-	if (currentMillis - previousMillis > samplingInterval) {
-		previousMillis += samplingInterval;
-		/* ANALOGREAD - do all analogReads() at the configured sampling interval */
-		for (pin = 0; pin < TOTAL_PINS; pin++) {
-			if (IS_PIN_ANALOG(pin) && Firmata.getPinMode(pin) == PIN_MODE_ANALOG) {
-				analogPin = PIN_TO_ANALOG(pin);
-				if (analogInputsToReport & (1 << analogPin)) {
-					Firmata.sendAnalog(analogPin, analogRead(analogPin));
+	if(samplingEnabled){
+		checkDigitalInputs();
+	
+		//analog stuff with sampling
+		byte pin, analogPin;
+		if (currentMillis - analogPreviousMillis >  analogSamplingInterval) {
+			analogPreviousMillis += analogSamplingInterval;
+
+			/* ANALOGREAD - do all analogReads() at the configured sampling interval */
+			for (pin = 0; pin < TOTAL_PINS; pin++) {
+				if (IS_PIN_ANALOG(pin) && Firmata.getPinMode(pin) == PIN_MODE_ANALOG) {
+					analogPin = PIN_TO_ANALOG(pin);
+					if (analogInputsToReport & (1 << analogPin)) {
+						Firmata.sendAnalog(analogPin, analogRead(analogPin));
+					}
 				}
 			}
+			// report i2c data for all device with read continuous mode enabled
+			/*if (queryIndex > -1) {
+				for (byte i = 0; i < queryIndex + 1; i++) {
+					readAndReportData(query[i].addr, query[i].reg, query[i].bytes, query[i].stopTX);
+				}
+			}*/
 		}
-		// report i2c data for all device with read continuous mode enabled
-		/*if (queryIndex > -1) {
-			for (byte i = 0; i < queryIndex + 1; i++) {
-				readAndReportData(query[i].addr, query[i].reg, query[i].bytes, query[i].stopTX);
-			}
-		}*/
 	}
 }
 
@@ -442,34 +451,28 @@ void FirmataCallbacks::outputPort(byte portNumber, byte portValue, byte forceSen
 
 void FirmataCallbacks::checkDigitalInputs(void)
 {
-	/* Using non-looping code allows constants to be given to readPort().
-	* The compiler will apply substantial optimizations if the inputs
-	* to readPort() are compile-time constants. */
-	if (TOTAL_PORTS > 0 && reportPINs[0]) outputPort(0, readPort(0, portConfigInputs[0]), false);
-	if (TOTAL_PORTS > 1 && reportPINs[1]) outputPort(1, readPort(1, portConfigInputs[1]), false);
-	if (TOTAL_PORTS > 2 && reportPINs[2]) outputPort(2, readPort(2, portConfigInputs[2]), false);
-	if (TOTAL_PORTS > 3 && reportPINs[3]) outputPort(3, readPort(3, portConfigInputs[3]), false);
-	if (TOTAL_PORTS > 4 && reportPINs[4]) outputPort(4, readPort(4, portConfigInputs[4]), false);
-	if (TOTAL_PORTS > 5 && reportPINs[5]) outputPort(5, readPort(5, portConfigInputs[5]), false);
-	if (TOTAL_PORTS > 6 && reportPINs[6]) outputPort(6, readPort(6, portConfigInputs[6]), false);
-	if (TOTAL_PORTS > 7 && reportPINs[7]) outputPort(7, readPort(7, portConfigInputs[7]), false);
-	if (TOTAL_PORTS > 8 && reportPINs[8]) outputPort(8, readPort(8, portConfigInputs[8]), false);
-	if (TOTAL_PORTS > 9 && reportPINs[9]) outputPort(9, readPort(9, portConfigInputs[9]), false);
-	if (TOTAL_PORTS > 10 && reportPINs[10]) outputPort(10, readPort(10, portConfigInputs[10]), false);
-	if (TOTAL_PORTS > 11 && reportPINs[11]) outputPort(11, readPort(11, portConfigInputs[11]), false);
-	if (TOTAL_PORTS > 12 && reportPINs[12]) outputPort(12, readPort(12, portConfigInputs[12]), false);
-	if (TOTAL_PORTS > 13 && reportPINs[13]) outputPort(13, readPort(13, portConfigInputs[13]), false);
-	if (TOTAL_PORTS > 14 && reportPINs[14]) outputPort(14, readPort(14, portConfigInputs[14]), false);
-	if (TOTAL_PORTS > 15 && reportPINs[15]) outputPort(15, readPort(15, portConfigInputs[15]), false);
-}
+	if((currentMillis - digitalPreviousMillis) > digitalSamplingInterval){
+		digitalPreviousMillis += digitalSamplingInterval;
 
-bool FirmataCallbacks::elapsed(int interval) {
-	if (millisElapsed == -1 || millis() - millisElapsed > interval) {
-		millisElapsed = millis();
-		return true;
-	}
-	else {
-		return false;
+		/* Using non-looping code allows constants to be given to readPort().
+		* The compiler will apply substantial optimizations if the inputs
+		* to readPort() are compile-time constants. */
+		if (TOTAL_PORTS > 0 && reportPINs[0]) outputPort(0, readPort(0, portConfigInputs[0]), false);
+		if (TOTAL_PORTS > 1 && reportPINs[1]) outputPort(1, readPort(1, portConfigInputs[1]), false);
+		if (TOTAL_PORTS > 2 && reportPINs[2]) outputPort(2, readPort(2, portConfigInputs[2]), false);
+		if (TOTAL_PORTS > 3 && reportPINs[3]) outputPort(3, readPort(3, portConfigInputs[3]), false);
+		if (TOTAL_PORTS > 4 && reportPINs[4]) outputPort(4, readPort(4, portConfigInputs[4]), false);
+		if (TOTAL_PORTS > 5 && reportPINs[5]) outputPort(5, readPort(5, portConfigInputs[5]), false);
+		if (TOTAL_PORTS > 6 && reportPINs[6]) outputPort(6, readPort(6, portConfigInputs[6]), false);
+		if (TOTAL_PORTS > 7 && reportPINs[7]) outputPort(7, readPort(7, portConfigInputs[7]), false);
+		/*if (TOTAL_PORTS > 8 && reportPINs[8]) outputPort(8, readPort(8, portConfigInputs[8]), false);
+		if (TOTAL_PORTS > 9 && reportPINs[9]) outputPort(9, readPort(9, portConfigInputs[9]), false);
+		if (TOTAL_PORTS > 10 && reportPINs[10]) outputPort(10, readPort(10, portConfigInputs[10]), false);
+		if (TOTAL_PORTS > 11 && reportPINs[11]) outputPort(11, readPort(11, portConfigInputs[11]), false);
+		if (TOTAL_PORTS > 12 && reportPINs[12]) outputPort(12, readPort(12, portConfigInputs[12]), false);
+		if (TOTAL_PORTS > 13 && reportPINs[13]) outputPort(13, readPort(13, portConfigInputs[13]), false);
+		if (TOTAL_PORTS > 14 && reportPINs[14]) outputPort(14, readPort(14, portConfigInputs[14]), false);
+		if (TOTAL_PORTS > 15 && reportPINs[15]) outputPort(15, readPort(15, portConfigInputs[15]), false);*/
 	}
 }
 

@@ -12,28 +12,30 @@ namespace Chetch{
 
     ADMMessage::error = ADMMessage::NO_ERROR;
 
-    int byteCount = strlen(s) - 1;
+    int byteCount = strlen(s) - 1; //because the last byte is the checksum
     
-    if(byteCount < 4){
+    if(byteCount < 6){
       ADMMessage::error = ADMMessage::ERROR_BADLY_FORMED;
       return NULL;
     }
 
     //put bytes in to an array and replace any 'zero byte' bytes with literal 0
     //count the number of arguments as well
-    byte *bytes = new byte[byteCount];
-    byte checkbyte = (byte)s[byteCount];
-    bytes[0] = (byte)s[0]; //this is the 'zero byte mask' the value we use to encode 0 (because 0 byte will be interpreted as end of string)
+    byte zeroByte = (byte)s[0];
+    byte checkbyte = (byte)s[byteCount]; //checksum of all bytes other than the zero byte and the checksum byte
+    if(checkbyte == zeroByte)checkbyte = 0;
+
     byte checksum = 0;
+    byte *bytes = new byte[byteCount - 1]; //we reduce by 1 as we don't need zero mask'
     int argCount = 0;
-    int argByteCountIdx = 5; //the byte index at which to find arguments
+    int argByteCountIdx = 6; //the byte index at which to find arguments (we start at 6 and not 5 because the first byte is the zero byte mask)
     for(int i = 1; i < byteCount; i++){
       byte b = (byte)s[i];
-      if(b == bytes[0])b = 0; //convert the zero byte mask to actual zero
-      bytes[i] = b;
+      if(b == zeroByte)b = 0; //convert the zero byte mask to actual zero
+      bytes[i - 1] = b;
       if(i == argByteCountIdx){
         argCount++;
-        argByteCountIdx += bytes[i] + 1;
+        argByteCountIdx += bytes[i - 1] + 1; //the position of the next argument
       }
       checksum += b;
     }    
@@ -44,8 +46,7 @@ namespace Chetch{
         return NULL;
     }
 
-
-    ADMMessage *message = new ADMMessage(bytes, byteCount, argCount);
+    ADMMessage *message = new ADMMessage(bytes, byteCount - 1, argCount); //byte count reduces by 1 we have excluded 0 byte
     delete[] bytes;
     
     return message;
@@ -77,22 +78,25 @@ namespace Chetch{
     return (int)ADMMessage::bytesToLong(bytes, numberOfBytes, littleEndian); 
   }
 
+
   /*
    * Constructor from byte array
    */
-  ADMMessage::ADMMessage(byte* bytes, int byteCount, int argCount){
-    type = bytes[1]; //we start from index 1 because the 0 index is the zero byte mask
-    tag = bytes[2];
-    target = bytes[3];
-    command = bytes[4];
+  ADMMessage::ADMMessage(byte* bytes, int byteCount, byte argCount){
+    type = bytes[0];
+    tag = bytes[1];
+    target = bytes[2];
+    command = bytes[3];
+    sender = bytes[4];
 
     //now parse out the arguments
     argumentCount = argCount;
+    maxArguments = argumentCount;
     if(argumentCount > 0)
     {
         int i = 5;
         arguments = new byte*[argumentCount];
-        argumentLengths = new int[argumentCount];
+        argumentLengths = new byte[argumentCount];
         int ac = 0;
         while(i < byteCount){
           int bc = (int)bytes[i]; //the number of bytes in the argument
@@ -105,7 +109,7 @@ namespace Chetch{
           i = i + bc + 1;
         }
      }
-  }
+  };
 
   ADMMessage::ADMMessage(byte messageType, byte messageTag, byte messageTarget, byte messageCommand){
     type = messageType;
@@ -114,18 +118,22 @@ namespace Chetch{
     command = messageCommand;
 
     newID();
-  }
+  };
   
-  ADMMessage::ADMMessage(int maxVals){
-	if(maxVals > 0){
-		maxValues = maxVals + 4; //add an extra 4 for the Type,Tag,Target,Command params
-		values = new char*[maxValues*2];
+  ADMMessage::ADMMessage(int maxArgs){
+	if(maxArgs > 0){
+        maxArguments = maxArgs;
+		arguments = new byte*[maxArguments];
+        argumentLengths = new byte[maxArguments];
+        for(int i = 0; i < maxArgs; i++){
+            argumentLengths[i] = 0;
+        }
 	}
     newID();
   };
 
   ADMMessage::~ADMMessage() {
-    if(argumentCount > 0){
+    if(maxArguments > 0){
       for(int i = 0; i < argumentCount; i++){
         delete[] arguments[i];
       }
@@ -133,12 +141,12 @@ namespace Chetch{
       delete[] argumentLengths;
     }
     
-    if(maxValues > 0){
+    /*if(maxValues > 0){
       for(int i = 0; i < 2*valuesCount; i++){
 		delete[] values[i];
       }
       delete[] values;
-    }
+    }*/
   }
 
    void ADMMessage::newID(){
@@ -148,11 +156,20 @@ namespace Chetch{
    /*
    * Arguments: positional byte arrays
    */
-   int ADMMessage::getArgumentCount(){
+
+   byte ADMMessage::bytesRequired(){
+    byte sz = 0;
+    for(int i = 0; i < argumentCount; i++){
+        sz += 1 + argumentLengths[i];
+    }
+    return sz + 5 + 2; //Add 5 for Type, Tag, Target, Command, Sender, Add 2 for zeroByte and checksum
+   }
+
+   byte ADMMessage::getArgumentCount(){
 	return argumentCount;
    }
 
-  long ADMMessage::argumentAsLong(int argIdx){
+  long ADMMessage::argumentAsLong(byte argIdx){
     if(argIdx >=0 && argIdx < argumentCount){
       return ADMMessage::bytesToLong(arguments[argIdx], argumentLengths[argIdx], littleEndian);
     } else {
@@ -160,7 +177,7 @@ namespace Chetch{
     }
   }
 
-  unsigned long ADMMessage::argumentAsULong(int argIdx){
+  unsigned long ADMMessage::argumentAsULong(byte argIdx){
     if(argIdx >=0 && argIdx < argumentCount){
       return ADMMessage::bytesToULong(arguments[argIdx], argumentLengths[argIdx], littleEndian);
     } else {
@@ -168,11 +185,11 @@ namespace Chetch{
     }
   }
 
-  int ADMMessage::argumentAsInt(int argIdx){
+  int ADMMessage::argumentAsInt(byte argIdx){
     return (int)argumentAsLong(argIdx);
   }
 
-  char *ADMMessage::argumentAsCharArray(int argIdx, char *s){
+  char *ADMMessage::argumentAsCharArray(byte argIdx, char *s){
     if(argIdx >=0 && argIdx < argumentCount){
       for(int i = 0; i < argumentLengths[argIdx]; i++){
         s[i] = arguments[argIdx][i];
@@ -184,107 +201,102 @@ namespace Chetch{
     }
   }
 
-  byte ADMMessage::argumentAsByte(int argIdx){
+  byte ADMMessage::argumentAsByte(byte argIdx){
     if(argIdx >=0 && argIdx < argumentCount && argumentLengths[argIdx] == 1){
       return (byte)arguments[argIdx][0];
     } else {
       return 0;
     }
   }
-  
-  /*
-   * Values: key referenced strings
-   */
 
-  char *ADMMessage::getValue(const char *key){
-    return Utils::getValue(key, values, valuesCount);
-  }
-  
-  void ADMMessage::addValue(const char *key, const char *value, boolean allowNullOrEmpty){
-    if(valuesCount == maxValues){
-      return;
-    }
-    if(getValue(key) != NULL){
-      return;
-    }
-    if(!allowNullOrEmpty && (value == NULL || strlen(value) == 0)){
-      return;
-    }
-
-    //copy to heap (remember to delete in destructor)
-    char *k = new char[strlen(key) + 1];
-    for(int i = 0; i < strlen(key); i++){
-      k[i] = key[i];
-    }
-    k[strlen(key)] = 0;
-    char *v = new char[strlen(value) + 1];
-    for(int i = 0; i < strlen(value); i++){
-      v[i] = value[i];
-    }
-    v[strlen(value)] = 0;
+  void ADMMessage::addBytes(byte *bytev, byte bytec){
+    if(argumentCount == maxArguments)return;
     
-    values[2*valuesCount] = k; //ey;
-    values[2*valuesCount+ 1] = v; //alue;
-    valuesCount++;
+    arguments[argumentCount] = new byte[bytec];
+    argumentLengths[argumentCount] = bytec;
+    for(int i = 0; i < bytec; i++){
+      arguments[argumentCount][i] = bytev[i];
+    }
+    argumentCount++;
   }
 
-  void ADMMessage::addInt(const char *key, int value){
-    static char c[6];
-    sprintf(c, "%d", value);
-    addValue(key, c, false);
+  void ADMMessage::addByte(byte argv){
+    addBytes((byte*)&argv, sizeof(argv));
   }
 
-  void ADMMessage::addLong(const char *key, unsigned long value){
-    static char c[16];
-    sprintf(c, "%lu", value);
-    addValue(key, c, false);
-  }
-
-  void ADMMessage::addFloat(const char *key, float value, int precision, int width) {
-	static char c[16];
-	dtostrf(value, width, precision, c);
-	addValue(key, c, false);
-  }
-
-  void ADMMessage::addDouble(const char *key, double value, int precision, int width) {
-	  static char c[20];
-	  dtostrf(value, width, precision, c);
-	  addValue(key, c, false);
-  }
-
-  void ADMMessage::addBool(const char *key, bool value){
-    addByte(key, value ? 1 : 0);
-  }
-
-  void ADMMessage::addByte(const char *key, byte value){
-    static char c[3];
-    sprintf(c, "%d", value);
-    addValue(key, c, false);
-  }
-
-  void ADMMessage::setValue(const char *value){
-    addValue("Value", value, true);  
+  void ADMMessage::addBool(bool argv){
+    addByte((byte)argv);
   }
   
-  /*char *ADMMessage::serialize(boolean encodeUrl = true){
-    addByte("Type", type);
-    addByte("Tag", tag);
-    addByte("Target", target);
-    addByte("Command", command);
-    
-    static char str[512]; //512];
-    str[0] = 0;
-    return Utils::buildQueryString(str, values, valuesCount, encodeUrl);
-  }*/
+  void ADMMessage::addInt(int argv){
+    addBytes((byte*)&argv, sizeof(argv));
+  }
 
-  void ADMMessage::serialize(char* s, boolean encodeUrl){
-    addByte("Type", type);
-    addByte("Tag", tag);
-    addByte("Target", target);
-    addByte("Command", command);
-    
-    s[0] = 0;
-    Utils::buildQueryString(s, values, valuesCount, encodeUrl);
+  void ADMMessage::addLong(long argv){
+    addBytes((byte*)&argv, sizeof(argv));
+  }
+
+  void ADMMessage::addString(const char *argv){
+    addBytes((byte*)argv, strlen(argv));
   }
   
+  void ADMMessage::addFloat(float argv){
+    addBytes((byte*)&argv, sizeof(argv));
+  }
+  
+  void ADMMessage::serialize(char* bytes){
+    bytes[1] = type;
+    bytes[2] = tag;
+    bytes[3] = target;
+    bytes[4] = command;
+    bytes[5] = sender;
+
+    byte idx = 6;
+    for(int i = 0; i < argumentCount; i++){
+        bytes[idx] = argumentLengths[i];
+        idx++;
+        for(int j = 0; j < argumentLengths[i]; j++){
+            byte b = arguments[i][j];
+            bytes[idx] = b;
+            idx++;
+        }
+    }
+
+    byte checksum = 0;
+    for(int i = 1; i < idx; i++){
+        byte b = bytes[i];
+        checksum += b;
+    }
+    
+    //look for zeroByte
+    byte zeroByte = 1;
+    while(zeroByte <= 255){
+        bool useable = true;
+        for(int i = 1; i < idx; i++){
+            if(bytes[i] == zeroByte){
+                useable = false;
+                break;
+            }
+        }
+        if(useable)break;
+        zeroByte++;
+    }
+        
+    //now replace all zeros with zerobyte
+    for(int i = 1; i < idx; i++){
+        if(bytes[i] == 0)bytes[i] = zeroByte;
+    }
+    
+    bytes[0] = zeroByte;
+    bytes[idx] = checksum;
+  }
+  
+  ADMMessage::CommandType ADMMessage::commandType(){
+        return (ADMMessage::CommandType)(command & 0xF);
+  }
+
+  byte ADMMessage::commandIndex(){
+        return (byte)(command >> 4);
+  }
+
 } //end of namespace

@@ -10,6 +10,7 @@ namespace Chetch{
 		OneWire *oneWire = NULL;
 		DallasTemperature *tempSensors = NULL;
 		int numberOfTempSensors = 0;
+		uint8_t **deviceAddresses = NULL;
 
     public:
 		DS18B20Array(byte tgt, byte cat, char *dn);

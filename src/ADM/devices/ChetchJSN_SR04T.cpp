@@ -1,12 +1,6 @@
 #include "ChetchUtils.h"
 #include "ChetchJSN_SR04T.h"
 
-const char DURATION[] PROGMEM = "Duration";
-
-const char *const PARAMS_TABLE[] PROGMEM = {
-	DURATION
-};
-
 namespace Chetch{
 
 	JSN_SR04T::JSN_SR04T(byte tgt, byte cat, char *dn) : ArduinoDevice(tgt, cat, dn) {
@@ -26,7 +20,7 @@ namespace Chetch{
 
 	bool JSN_SR04T::handleCommand(ADMMessage *message, ADMMessage *response) {
 		long duration;
-		switch ((ADMMessage::CommandType)message->command) {
+		switch (message->commandType()) {
 			case ADMMessage::COMMAND_TYPE_READ:
 				
 				for (int i = 0; i < 2; i++) {
@@ -43,8 +37,7 @@ namespace Chetch{
 					if (duration > 0)break;
 				}
 				response->type = (byte)ADMMessage::TYPE_DATA;
-				char stBuffer[16];
-				response->addLong(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), duration);
+				response->addLong(duration);
 				return true;
 
 			default:

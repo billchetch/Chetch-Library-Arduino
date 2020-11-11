@@ -20,55 +20,6 @@
 #error Unsupported hardware
 #endif
 
-const char BOARD_PARAM[] PROGMEM = "BD";
-const char MAX_DEVICES_PARAM[] PROGMEM = "MD";
-const char BOARD_ID_PARAM[] PROGMEM = "BDID";
-const char LITTLE_ENDIAN_PARAM[] PROGMEM = "LE";
-const char LEDBI_PARAM[] PROGMEM = "LEDBI";
-const char ADM_INITIALISED_PARAM[] PROGMEM = "AI";
-const char FREE_MEMORY_PARAM[] PROGMEM = "FM";
-const char DEVICE_COUNT_PARAM[] PROGMEM = "DC";
-const char DEVICE_TARGET_PARAM[] PROGMEM = "DT";
-const char DEVICE_CATEGORY_PARAM[] PROGMEM = "DG";
-const char DEVICE_ID_PARAM[] PROGMEM = "DID"; 
-const char DEVICE_NAME_PARAM[] PROGMEM = "DN";
-const char MILLIS_PARAM[] PROGMEM = "MS";
-const char MAX_MESSAGE_SIZE_PARAM[] PROGMEM = "MM";
-const char ERROR_CODE_PARAM[] PROGMEM = "EC";
-
-const char ADM_INITIALISED_MESSAGE[] PROGMEM = "Initialised";
-const char STATUS_OK_MESSAGE[] PROGMEM = "Status OK";
-const char NO_DEVICE_MESSAGE[] PROGMEM = "No device";
-const char PARSE_ERROR_MESSAGE[] PROGMEM = "Parse error";
-const char BOARD_CONFIGURED_MESSAGE[] PROGMEM = "Configured";
-const char DEVICE_ALREADY_ADDED_MESSAGE[] PROGMEM = "Already added"; 
-
-const char *const PARAMS_TABLE[] PROGMEM = {
-					BOARD_PARAM, 
-					MAX_DEVICES_PARAM, 
-					BOARD_ID_PARAM, 	
-					LITTLE_ENDIAN_PARAM, 
-					LEDBI_PARAM,
-					ADM_INITIALISED_PARAM,  	
-					FREE_MEMORY_PARAM, 
-					DEVICE_COUNT_PARAM, 
-					DEVICE_TARGET_PARAM, 
-					DEVICE_CATEGORY_PARAM, 
-					DEVICE_ID_PARAM, //not used
-					DEVICE_NAME_PARAM,
-					MILLIS_PARAM,
-					MAX_MESSAGE_SIZE_PARAM,
-					ERROR_CODE_PARAM
-					};
-
-const char *const MESSAGES_TABLE[] PROGMEM = {
-					ADM_INITIALISED_MESSAGE, 
-					STATUS_OK_MESSAGE, 
-					NO_DEVICE_MESSAGE,
-					PARSE_ERROR_MESSAGE,
-					BOARD_CONFIGURED_MESSAGE,
-					DEVICE_ALREADY_ADDED_MESSAGE 
-					};
 
 namespace Chetch{
 	ArduinoDeviceManager ADMFirmataCallbacks::ADM;
@@ -87,20 +38,27 @@ namespace Chetch{
 		//emerged when the connected computer has called too frequently which in turn was solved by putting a delay
 		//on the computer thread ... so at the time of writing there hasn't occurred a situation where putting a delay
 		//here was required...
-		char *s = new char[MAX_MESSAGE_SIZE];
-		message->serialize(s);
-		Firmata.sendString(s);
-		delete[] s;
+
+		message->sender = boardID;
+		int length = message->bytesRequired() + 1;
+		char *bytes = new char[length]; //we add 1 extra as a 0 for the end
+		message->serialize(bytes);
+		bytes[length - 1] = 0;
+		char stBuffer[24];
+		if(bytes[0] == 0){
+			sprintf(stBuffer, "0 at first byte of %d", message->bytesRequired());
+			Firmata.sendString(stBuffer);
+		} else {
+			Firmata.sendString(bytes);
+		}
+		delete[] bytes;
+		FirmataStream->flush();
 	}
 
 	void ADMFirmataCallbacks::respond(ADMMessage *message, ADMMessage *response) {
 		//this provides a hook to allow modification of response
 		response->target = message->target;
 		response->tag = message->tag;
-		if(this->boardID != NULL){
-			char stBuffer[5];
-			response->addValue(Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), this->boardID, true);
-		}
 		sendMessage(response);
 	}
 
@@ -116,17 +74,16 @@ namespace Chetch{
 	void ADMFirmataCallbacks::handleMessage(ADMMessage *message) {
 		
 		ADMMessage *response = NULL;
-		char stBuffer[18];	//string table buffer				
 		
 		if (message == NULL) {
-			response = new ADMMessage(2);
+			response = new ADMMessage(1);
 			response->type = (byte)Chetch::ADMMessage::TYPE_ERROR;
-			response->addInt(Utils::getStringFromProgmem(stBuffer, 14, PARAMS_TABLE), ADMMessage::error); 
-			response->setValue(Utils::getStringFromProgmem(stBuffer, 3, PARAMS_TABLE));
+			response->addInt(ADMMessage::error); 
 			sendMessage(response);
 			delete response;
 			return;
 		}
+
 		
 		//we have a valid message to deal with
 		ArduinoDevice *device = message->target == 0 ? NULL : ADM.getDevice(message->target);
@@ -136,70 +93,65 @@ namespace Chetch{
 				initialise();
 				response = new ADMMessage(4);
 				response->type = (byte)ADMMessage::TYPE_INITIALISE_RESPONSE;
-				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
-				response->addInt(Utils::getStringFromProgmem(stBuffer, 7, PARAMS_TABLE), ADM.getDeviceCount());
-				response->setValue(Utils::getStringFromProgmem(stBuffer, 0, MESSAGES_TABLE));
+				response->addBool(LITTLE_ENDIAN);
+				response->addInt(freeMemory());
+				response->addByte(MAX_DEVICES);
+				response->addByte(LED_BUILTIN);
 				respond(message, response);
 				break;
 		
 			case ADMMessage::TYPE_STATUS_REQUEST:
 				if (message->target == 0) {
-					response = new ADMMessage(8);
+					response = new ADMMessage(4);
 					response->type = (byte)ADMMessage::TYPE_STATUS_RESPONSE;
 					
 					//General values for the board
-					response->addValue(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), BOARD, false);
-					response->addBool(Utils::getStringFromProgmem(stBuffer, 5, PARAMS_TABLE), ADM.isInitialised());
-					response->addByte(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), MAX_DEVICES);
-					response->addBool(Utils::getStringFromProgmem(stBuffer, 3, PARAMS_TABLE), LITTLE_ENDIAN);
-					response->addByte(Utils::getStringFromProgmem(stBuffer, 4, PARAMS_TABLE), LED_BUILTIN);
-					response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
-					response->addByte(Utils::getStringFromProgmem(stBuffer, 7, PARAMS_TABLE), ADM.getDeviceCount());
-					response->addInt(Utils::getStringFromProgmem(stBuffer, 13, PARAMS_TABLE), MAX_MESSAGE_SIZE);
-					response->setValue(Utils::getStringFromProgmem(stBuffer, 1, MESSAGES_TABLE));
+					response->addInt(freeMemory());
+					response->addString(BOARD);
+					response->addBool(ADM.isInitialised());
+					response->addByte(ADM.getDeviceCount());
 				}
 				else if (device != NULL) {
 					response = new ADMMessage(4);
 					response->type = (byte)ADMMessage::TYPE_STATUS_RESPONSE;
 					
 					//values for device
-					response->addByte(Utils::getStringFromProgmem(stBuffer, 8, PARAMS_TABLE), device->target);
-					response->addByte(Utils::getStringFromProgmem(stBuffer, 9, PARAMS_TABLE), device->category);
-					response->addValue(Utils::getStringFromProgmem(stBuffer, 11, PARAMS_TABLE), device->name, false);
+					response->addByte(device->target);
+					response->addByte(device->category);
+					response->addString(device->name);
 
 					device->handleStatusRequest(message, response);
-				}
+				} 
 				else {
-					response = new ADMMessage(1);
+					response = new ADMMessage(3);
 
 					//error
 					response->type = (byte)Chetch::ADMMessage::TYPE_ERROR;
-					response->setValue(Utils::getStringFromProgmem(stBuffer, 2, MESSAGES_TABLE));
+					response->addInt(ADMMessage::ERROR_UNKNOWN);
+					response->addByte(message->type);
+					response->addByte(message->target);
 				}
 				respond(message, response);
 				break;
 
 			case ADMMessage::TYPE_CONFIGURE:
-				if (message->target == 0) { //configure board
-					response = new ADMMessage(5);
-					response->setValue(Utils::getStringFromProgmem(stBuffer, 4, MESSAGES_TABLE));
+				if (message->target == 0) { //configure board (not yet used)
+					response = new ADMMessage(4);
+					response->addByte(message->target);
 					configure(message, response);
 				} else { //configure device
 					bool initial = true;
+					response = new ADMMessage(8);
 					if (device == NULL) { //this is a new device
-						response = new ADMMessage(8);
 						char deviceName[DEVICE_NAME_LENGTH];
 						message->argumentAsCharArray(1, deviceName);
 						device = ADM.addDevice(message->target, message->argumentAsByte(0), deviceName);
-						response->addValue(Utils::getStringFromProgmem(stBuffer, 11, PARAMS_TABLE), device->name, false);
 					} else { //we already have a device added
-						response = new ADMMessage(5);
 						initial = false;
-						response->setValue(Utils::getStringFromProgmem(stBuffer, 5, MESSAGES_TABLE));
 					}
+					response->addString(device->name);
 					device->configure(initial, message, response);
 				}
-				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
 				response->type = (byte)ADMMessage::TYPE_CONFIGURE_RESPONSE;
 				respond(message, response);
 				break;
@@ -207,15 +159,16 @@ namespace Chetch{
 			case ADMMessage::TYPE_PING:
 				response = new ADMMessage(3);
 				response->type = (byte)ADMMessage::TYPE_PING_RESPONSE;
-				response->addBool(Utils::getStringFromProgmem(stBuffer, 5, PARAMS_TABLE), ADM.isInitialised());
-				response->addInt(Utils::getStringFromProgmem(stBuffer, 6, PARAMS_TABLE), freeMemory());
-				response->addLong(Utils::getStringFromProgmem(stBuffer, 12, PARAMS_TABLE), millis());
+				response->addInt(freeMemory());
+				response->addBool(ADM.isInitialised());
+				response->addLong(millis());
 				respond(message, response);
 				break;
 
 			case ADMMessage::TYPE_COMMAND:
 				response = new ADMMessage(8);
 				response->type = (byte)ADMMessage::TYPE_COMMAND_RESPONSE;
+				response->command = message->command;
 				if (message->target == 0) {
 					handleCommand(message, response);
 				} else if(device != NULL) {
@@ -229,8 +182,8 @@ namespace Chetch{
 
 				//error
 				response->type = (byte)Chetch::ADMMessage::TYPE_ERROR;
-				response->addInt(Utils::getStringFromProgmem(stBuffer, 14, PARAMS_TABLE), ADMMessage::ERROR_UNRECOGNISED_MESSAGE_TYPE);
-				response->addInt("MT", message->type);
+				response->addInt(ADMMessage::ERROR_UNRECOGNISED_MESSAGE_TYPE);
+				response->addByte(message->type);
 				break;
 		}
 		if(response != NULL){
@@ -247,29 +200,27 @@ namespace Chetch{
  	}
 
 	void ADMFirmataCallbacks::loop() {
-		if(elapsed(5000)){
-			heartbeat();
-		}
+		samplingEnabled = ADM.isInitialised();	
 
 		FirmataCallbacks::loop();
 	
+		heartbeat();
+		
 		ADM.loop();
 	}
 
 
 	void ADMFirmataCallbacks::heartbeat(){
+		int diff = currentMillis - heartbeatMillis;
 		if(ADM.isInitialised()){
-			digitalWrite(LED_BUILTIN, HIGH);
-			delay(5);
-			digitalWrite(LED_BUILTIN, LOW);
+			if(diff <= 250){
+			   digitalWrite(LED_BUILTIN, HIGH);
+			} else {
+			   digitalWrite(LED_BUILTIN, LOW);
+			}
 		} else {
-			digitalWrite(LED_BUILTIN, HIGH);
-			delay(250);
-			digitalWrite(LED_BUILTIN, LOW);
-			delay(150);
-			digitalWrite(LED_BUILTIN, HIGH);
-			delay(250);
 			digitalWrite(LED_BUILTIN, LOW);
 		}
+		if(diff > 5000)heartbeatMillis = currentMillis;
 	}
 } //end namespace

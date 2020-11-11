@@ -32,12 +32,25 @@ namespace Chetch{
 
 	bool Counter::handleCommand(ADMMessage *message, ADMMessage *response) {
 		unsigned long interval = 0;
-		switch ((ADMMessage::CommandType)message->command) {
+		float rate = 0;
+		switch (message->commandType()) {
 			case ADMMessage::COMMAND_TYPE_READ:
 				interval = millis() - _lastRead;
-				char stBuffer[3];
-				response->addLong(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), _counter);
-				response->addLong(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), interval);
+				switch(message->commandIndex()){
+					case 0: //Count
+						response->addLong(_counter);
+						response->addLong(interval);
+						break;
+					case 1: //Rate
+						rate = ((float)_counter / (float)interval) * 1000.0;
+						response->addFloat(rate);
+						break;
+
+					default:
+						break;
+
+				}
+				
 				_lastRead = millis();
 				_counter = 0; //reset
 				return true;

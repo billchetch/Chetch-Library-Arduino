@@ -1,16 +1,6 @@
 #include "ChetchUtils.h"
 #include "ChetchDS18B20Array.h"
 
-const char SENSOR_COUNT[] PROGMEM = "SC";
-const char ONE_WIRE_PIN[] PROGMEM = "OP";
-const char TEMPERATURE[] PROGMEM = "TP";
-
-const char *const PARAMS_TABLE[] PROGMEM = {
-	SENSOR_COUNT,
-	ONE_WIRE_PIN,
-	TEMPERATURE
-};
-
 namespace Chetch{
 
 	DS18B20Array::DS18B20Array(byte tgt, byte cat, char *dn) : ArduinoDevice(tgt, cat, dn) {
@@ -20,6 +10,12 @@ namespace Chetch{
 	DS18B20Array::~DS18B20Array(){
 		if (tempSensors != NULL)delete tempSensors;
 		if (oneWire != NULL)delete oneWire;
+		if(numberOfTempSensors > 0){
+			for(int i = 0; i < numberOfTempSensors; i++){
+				delete[] deviceAddresses[i];
+			}
+			delete[] deviceAddresses;
+		}
 	}
 
 	void DS18B20Array::configure(bool initial, ADMMessage *message, ADMMessage *response) {
@@ -30,29 +26,37 @@ namespace Chetch{
 			oneWire = new OneWire(owPin);
 			tempSensors = new DallasTemperature(oneWire);
 			tempSensors->begin();
+			tempSensors->setResolution(9); //0.5 degrees celsius .... faster look up times than 11 or 12 bit
+
+			//get number of sensors and their addresses (this is to speed up the handlecommand loop)
 			numberOfTempSensors = tempSensors->getDeviceCount();
-			char stBuffer[3];
-			response->addInt(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), numberOfTempSensors);
-			response->addInt(Utils::getStringFromProgmem(stBuffer, 1, PARAMS_TABLE), owPin);
+			deviceAddresses = new uint8_t*[numberOfTempSensors];
+			DeviceAddress tempDeviceAddress;
+			for (int i = 0; i < numberOfTempSensors; i++) {
+				tempSensors->getAddress(tempDeviceAddress, i);
+				deviceAddresses[i] = new uint8_t[8];
+				for(int j = 0; j < 8; j++){
+					deviceAddresses[i][j] = tempDeviceAddress[j];
+				}
+			}
+
+			response->addInt(numberOfTempSensors);
+			response->addInt(owPin);
 		}
 	}
 
 	bool DS18B20Array::handleCommand(ADMMessage *message, ADMMessage *response) {
-		switch ((ADMMessage::CommandType)message->command) {
+		switch (message->commandType()) {
 			case ADMMessage::COMMAND_TYPE_READ:
 				if (numberOfTempSensors > 0) {
 					tempSensors->requestTemperatures();
-					DeviceAddress tempDeviceAddress;
 					response->type = (byte)ADMMessage::TYPE_DATA;
 					response->target = target;
-					char stBuffer[3];
-					response->addInt(Utils::getStringFromProgmem(stBuffer, 0, PARAMS_TABLE), numberOfTempSensors);
-					char tempKey[6]; //note that this limits the max number of sensors to 100!
+					response->addInt(numberOfTempSensors);
+					
 					for (int i = 0; i < numberOfTempSensors; i++) {
-						tempSensors->getAddress(tempDeviceAddress, i);
-						float celsius = tempSensors->getTempC(tempDeviceAddress);
-						sprintf(tempKey, "%s-%d", Utils::getStringFromProgmem(stBuffer, 2, PARAMS_TABLE), i);
-						response->addFloat(tempKey, celsius);
+						float celsius = tempSensors->getTempC(deviceAddresses[i]);
+						response->addFloat(celsius);
 					}
 				}
 				return true;

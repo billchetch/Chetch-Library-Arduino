@@ -14,6 +14,8 @@ namespace Chetch{
     	public:
 			static ArduinoDeviceManager ADM;
 			
+			unsigned long heartbeatMillis = 0;
+
 			virtual void initialise();
 			virtual void sendMessage(ADMMessage *message);
 			virtual void respond(ADMMessage *message, ADMMessage *response);

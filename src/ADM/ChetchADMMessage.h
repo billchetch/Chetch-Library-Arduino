@@ -56,14 +56,11 @@ namespace Chetch{
        * Arguments are byte arrays and currently used for incoming messages (because of a Firmata limig) 
        * where the position of the bytes are assumed by whatever inteprets the message
        */
-      int argumentCount = 0;
-      byte **arguments;
-      int *argumentLengths;
+      byte maxArguments = 0;
+      byte argumentCount = 0; //how many arguments there are
+      byte **arguments; //the arguments themselves (indexed)
+      byte *argumentLengths; //how long each argument is
       bool littleEndian = true;
-
-      char **values;
-      int maxValues = 0;
-      int valuesCount = 0;
     
     public:  
       static ErrorCode error;
@@ -73,45 +70,44 @@ namespace Chetch{
       byte tag = 0; //tagging data sent from computer ... can be re-used to send back to make comms linked
       byte target = 0; //used to select a 'device'
       byte command = 0; //should take a command Type value
-    
+      byte sender = 0; //should take the ID of the ADM that sends the message
+
       static ADMMessage *deserialize(char *s);
       static long bytesToLong(byte *bytes, int numberOfBytes, bool littleEndian = true);
       static unsigned long bytesToULong(byte *bytes, int numberOfBytes, bool littleEndian = true);
       static int bytesToInt(byte *bytes, int numberOfBytes, bool littleEndian = true);
       
-      ADMMessage(byte *bytes, int byteCount, int argCount);
+      ADMMessage(byte* bytes, int byteCount, byte argCount);
       ADMMessage(byte messageType = 0, byte messageTag = 0, byte messageTarget = 0, byte messageCommand = 0);
-      ADMMessage(int maxVals);
+      ADMMessage(int maxArgs);
       ~ADMMessage();
 
       /*
        * Arguments are byte arrays and currently used for incoming messages (because of a Firmata limig) 
        * where the position of the bytes are assumed by whatever inteprets the message
        */
-      int getArgumentCount();
-      long argumentAsLong(int argIdx);
-      unsigned long argumentAsULong(int argIdx);
-      int argumentAsInt(int argIdx);
-      char *argumentAsCharArray(int argIdx, char *s);
-      byte argumentAsByte(int argIdx);
+      byte bytesRequired();
+      byte getArgumentCount();
+      long argumentAsLong(byte argIdx);
+      unsigned long argumentAsULong(byte argIdx);
+      int argumentAsInt(byte argIdx);
+      char *argumentAsCharArray(byte argIdx, char *s);
+      byte argumentAsByte(byte argIdx);
 
-      /*
-       * Values are char arrays with a corresponding 'key' and thereofre not positional.  They
-       * are currently used for outgoing messages.
-       */
-      char *getValue(const char *key); 
-      void addValue(const char *key, const char *value, boolean allowNullOrEmpty);
-      void addByte(const char *key, byte value);	
-      void addLong(const char *key, unsigned long value);
-      void addInt(const char *key, int value);
-      void addBool(const char *key, bool value);
-	  void addFloat(const char *key, float value, int precision = 1, int width = 4);
-	  void addDouble(const char *key, double value, int precision = 1, int width = 4);
+      void addBytes(byte *bytev, byte bytec);
+      void addByte(byte argv);
+      void addBool(bool argv);
+      void addInt(int argv);
+      void addLong(long argv);
+      void addString(const char *argv);
+      void addFloat(float argv);
 
-      void setValue(const char *value); //adds the 'Value' value with the passed string
-      
-      void serialize(char *s, boolean encodeUrl = true);
+      void serialize(char *s);
       //char *serialize(boolean encodeUrl = true);
+
+      //these extract values from the 'command' byte
+      CommandType commandType();
+      byte commandIndex();
 
     private:
       void newID();

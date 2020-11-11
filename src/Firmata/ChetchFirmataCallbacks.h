@@ -9,7 +9,7 @@ namespace Chetch{
 class FirmataCallbacks{
 	
     public:
-		static void init(FirmataCallbacks *fcb, const char* boardID, int options = 0);
+		static void init(FirmataCallbacks *fcb, byte boardID, long baudRate, int options = 0);
 		static void stringCallback(char *s);
 		static void sysexCallback(byte command, byte argc, byte *argv);
 		static void setPinModeCallback(byte pin, int mode);
@@ -27,7 +27,9 @@ class FirmataCallbacks{
 		* instance props and methods
 		*/
 
-		const char* boardID; //used to identify this board to other boards/controllers
+		Stream *FirmataStream;
+
+		byte boardID;						//used to identify this board to other boards/controllers
 
 		/* analog inputs */
 		int analogInputsToReport = 0;		// bitwise array to store pin reporting
@@ -41,12 +43,13 @@ class FirmataCallbacks{
 
 		/* timer variables */
 		unsigned long currentMillis;        // store the current value from millis()
-		unsigned long previousMillis;       // for comparison with currentMillis
-		unsigned int samplingInterval = 19; // how often to run the main loop (in ms)
-		long millisElapsed = -1;			// last time the 'elapsed' function return true
+		unsigned int analogSamplingInterval = 19; // how often to run the analog pin loop (in ms)
+		unsigned long analogPreviousMillis = 0;
+		unsigned int digitalSamplingInterval = 20; //how often to run the check digital pins code (the reason for the interval is that the process of sampling sends data and so the throttling is to prevent serial bufffer overloads)
+		unsigned long digitalPreviousMillis = 0;
+		boolean samplingEnabled = false;
 
 		boolean isResetting = false;
-
 
 		virtual void handleString(char *s);
 		virtual void handleSysex(byte command, byte argc, byte *argv);
@@ -58,12 +61,11 @@ class FirmataCallbacks{
 		virtual void handleReportDigital(byte port, int value);
 		virtual void handleSystemReset();
 
-		virtual void begin(const char *boardID, int options = 0);
+		virtual void begin(byte boardID, long baudRate, int options = 0);
 		virtual void loop();
 		void processSerialInput();
 		void outputPort(byte portNumber, byte portValue, byte forceSend);
 		void checkDigitalInputs(void);
-		bool elapsed(int interval);
 };
 
 } //end namespace
