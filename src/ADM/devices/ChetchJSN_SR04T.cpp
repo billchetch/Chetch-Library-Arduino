@@ -14,8 +14,8 @@ namespace Chetch{
 	void JSN_SR04T::configure(bool initial, ADMMessage *message, ADMMessage *response) {
 		ArduinoDevice::configure(initial, message, response);
 
-		_transmitPin = message->argumentAsByte(2);
-		_receivePin = message->argumentAsByte(3);
+		_transmitPin = message->argumentAsByte(MSG_DEVICE_PARAMS_START_INDEX);
+		_receivePin = message->argumentAsByte(MSG_DEVICE_PARAMS_START_INDEX + 1);
 	}
 
 	bool JSN_SR04T::handleCommand(ADMMessage *message, ADMMessage *response) {

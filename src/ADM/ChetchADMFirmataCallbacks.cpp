@@ -144,8 +144,8 @@ namespace Chetch{
 					response = new ADMMessage(8);
 					if (device == NULL) { //this is a new device
 						char deviceName[DEVICE_NAME_LENGTH];
-						message->argumentAsCharArray(1, deviceName);
-						device = ADM.addDevice(message->target, message->argumentAsByte(0), deviceName);
+						message->argumentAsCharArray(MSG_DEVICE_NAME_INDEX, deviceName);
+						device = ADM.addDevice(message->target, message->argumentAsByte(MSG_DEVICE_CATEGROY_INDEX), deviceName);
 					} else { //we already have a device added
 						initial = false;
 					}

@@ -1,14 +1,6 @@
 #include "ChetchUtils.h"
 #include "ChetchCounter.h"
 
-const char COUNT[] PROGMEM = "CT"; //Count
-const char INTERVAL[] PROGMEM = "IV"; //Interval
-
-const char *const PARAMS_TABLE[] PROGMEM = {
-	COUNT,
-	INTERVAL
-};
-
 namespace Chetch{
 
 	Counter::Counter(byte tgt, byte cat, char *dn) : ArduinoDevice(tgt, cat, dn) {
@@ -22,12 +14,14 @@ namespace Chetch{
 	void Counter::configure(bool initial, ADMMessage *message, ADMMessage *response) {
 		ArduinoDevice::configure(initial, message, response);
 
-		_countPin = message->argumentAsByte(2);
-		_countState = message->argumentAsByte(3);
+		_countPin = message->argumentAsByte(MSG_DEVICE_PARAMS_START_INDEX);
+		_countState = message->argumentAsByte(MSG_DEVICE_PARAMS_START_INDEX + 1);
+		_rateInterval = message->argumentAsInt(MSG_DEVICE_PARAMS_START_INDEX + 2); 
 
 		_prevState = digitalRead(_countPin);
 
-		_lastRead = millis();
+		_lastMillis = millis();
+		
 	}
 
 	bool Counter::handleCommand(ADMMessage *message, ADMMessage *response) {
@@ -35,24 +29,19 @@ namespace Chetch{
 		float rate = 0;
 		switch (message->commandType()) {
 			case ADMMessage::COMMAND_TYPE_READ:
-				interval = millis() - _lastRead;
 				switch(message->commandIndex()){
 					case 0: //Count
 						response->addLong(_counter);
-						response->addLong(interval);
+						response->addLong(millis());
 						break;
 					case 1: //Rate
-						rate = ((float)_counter / (float)interval) * 1000.0;
-						response->addFloat(rate);
+						response->addFloat(_rate);
 						break;
 
 					default:
 						break;
 
 				}
-				
-				_lastRead = millis();
-				_counter = 0; //reset
 				return true;
 
 			default:
@@ -66,6 +55,13 @@ namespace Chetch{
 			if (state != _prevState) {
 				if (state == _countState)_counter++;
 				_prevState = state;
+			}
+
+			long interval = millis() - _lastMillis;
+			if(interval >= _rateInterval){
+				_rate = (float)_rateInterval * (float)(_counter - _lastCount) / (float)interval;
+				_lastMillis = millis();
+				_lastCount = _counter;
 			}
 		}
 		return NULL;

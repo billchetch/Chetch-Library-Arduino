@@ -5,6 +5,9 @@
 #include "ChetchADMMessage.h"
 
 #define DEVICE_NAME_LENGTH 10
+#define MSG_DEVICE_CATEGROY_INDEX 0
+#define MSG_DEVICE_NAME_INDEX 1
+#define MSG_DEVICE_PARAMS_START_INDEX 2
 
 namespace Chetch{
   

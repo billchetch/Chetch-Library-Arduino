@@ -22,7 +22,7 @@ namespace Chetch{
 		ArduinoDevice::configure(initial, message, response);
 
 		if (oneWire == NULL) {
-			int owPin = message->argumentAsInt(2);
+			int owPin = message->argumentAsInt(MSG_DEVICE_PARAMS_START_INDEX);
 			oneWire = new OneWire(owPin);
 			tempSensors = new DallasTemperature(oneWire);
 			tempSensors->begin();
