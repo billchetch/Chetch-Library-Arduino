@@ -149,7 +149,6 @@ namespace Chetch{
 					} else { //we already have a device added
 						initial = false;
 					}
-					response->addString(device->name);
 					device->configure(initial, message, response);
 				}
 				response->type = (byte)ADMMessage::TYPE_CONFIGURE_RESPONSE;

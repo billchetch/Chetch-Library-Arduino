@@ -31,7 +31,7 @@ namespace Chetch{
 
   bool ArduinoDevice::handleCommand(ADMMessage *message, ADMMessage *response) {
 	  //Return true to send response, false to cancel send (unless specified message type for response is DATA)
-	  switch ((ADMMessage::CommandType)message->command) {
+	  switch (message->commandType()) {
 		  case ADMMessage::COMMAND_TYPE_TEST:
 			  return true;
 	  
