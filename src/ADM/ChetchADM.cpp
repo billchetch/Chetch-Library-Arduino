@@ -118,7 +118,12 @@ namespace Chetch{
     return device;
   }
 
+
+
   void ArduinoDeviceManager::loop() {
+	
+
+
 	  ADMMessage *message;
 	  for (int i = 0; i < deviceCount; i++) {
 		  message = devices[i]->loop();
